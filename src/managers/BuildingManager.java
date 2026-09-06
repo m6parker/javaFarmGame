@@ -1,16 +1,11 @@
-import java.awt.BorderLayout;
-import java.awt.Dimension;
+package src.managers;
 import java.awt.Graphics2D;
-import java.awt.GridLayout;
-import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import javax.imageio.ImageIO;
-import javax.swing.BorderFactory;
-import javax.swing.ImageIcon;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
+import java.util.ArrayList;
+import java.util.List;
 
 public class BuildingManager {
     public static final int BUILDING_COUNT = 6;
@@ -26,7 +21,11 @@ public class BuildingManager {
     private final int[][] tileBuildings;
     private final BufferedImage[][] buildingTiles = new BufferedImage[2][3];
     private final int[] buildingCounts = new int[BUILDING_COUNT];
-    private final JLabel[] buildingCountLabels = new JLabel[BUILDING_COUNT];
+    private final List<CountListener> countListeners = new ArrayList<>();
+
+    public interface CountListener {
+        void countsChanged();
+    }
 
     public BuildingManager(int rows, int cols) {
         tileBuildings = new int[rows][cols];
@@ -68,30 +67,16 @@ public class BuildingManager {
         }
         tileBuildings[row][col] = buildingIndex;
         buildingCounts[buildingIndex]++;
-        updateBuildingCountLabels();
+        notifyCountListeners();
         return true;
     }
 
-    // creates panel to display number of buildings
-    public JPanel createPanel(int screenHeight) {
-        JPanel panel = new JPanel();
-        panel.setBorder(BorderFactory.createTitledBorder("buildings"));
-        panel.setLayout(new GridLayout(0, 1, 4, 4));
-        panel.setPreferredSize(new Dimension(180, screenHeight));
+    public int getBuildingCount(int buildingIndex) {
+        return buildingCounts[buildingIndex];
+    }
 
-        for (int i = 0; i < BUILDING_COUNT; i++) {
-            JPanel buildingRow = new JPanel(new BorderLayout(6, 0));
-            BufferedImage building = getBuildingImage(i);
-            if (building != null) {
-                Image thumbnail = building.getScaledInstance(32, 32, Image.SCALE_SMOOTH);
-                buildingRow.add(new JLabel(new ImageIcon(thumbnail)), BorderLayout.WEST);
-            }
-
-            buildingCountLabels[i] = new JLabel(BUILDING_NAMES[i] + ": 0");
-            buildingRow.add(buildingCountLabels[i], BorderLayout.CENTER);
-            panel.add(buildingRow);
-        }
-        return panel;
+    public void addCountListener(CountListener listener) {
+        countListeners.add(listener);
     }
 
     private void initializeBuildingTiles() {
@@ -119,11 +104,9 @@ public class BuildingManager {
         }
     }
 
-    private void updateBuildingCountLabels() {
-        for (int i = 0; i < BUILDING_COUNT; i++) {
-            if (buildingCountLabels[i] != null) {
-                buildingCountLabels[i].setText(BUILDING_NAMES[i] + ": " + buildingCounts[i]);
-            }
+    private void notifyCountListeners() {
+        for (CountListener listener : countListeners) {
+            listener.countsChanged();
         }
     }
 }

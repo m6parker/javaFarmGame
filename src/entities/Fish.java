@@ -1,9 +1,11 @@
+package src.entities;
 import java.awt.Color;
 import java.awt.Graphics2D;
+import src.managers.TileManager;
 
 public class Fish extends Mob {
     public Fish(int startCol, int startRow, int tileSize, int maxCol, int maxRow,
-            Color[][] tileColors) {
+            TileManager tileManager) {
         super(startCol, startRow, tileSize);
     }
 

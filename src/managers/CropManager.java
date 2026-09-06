@@ -1,3 +1,4 @@
+package src.managers;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Image;
@@ -5,13 +6,8 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import javax.imageio.ImageIO;
-import javax.swing.BorderFactory;
-import javax.swing.ImageIcon;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import java.awt.BorderLayout;
-import java.awt.Dimension;
-import java.awt.GridLayout;
+import java.util.ArrayList;
+import java.util.List;
 
 public class CropManager {
     public static final int CROP_COUNT = 1;
@@ -21,8 +17,12 @@ public class CropManager {
 
     private final int[][] tileCrops;
     private final int[] cropCounts = new int[CROP_COUNT];
-    private JLabel[] cropCountLabels = new JLabel[CROP_COUNT];
+    private final List<CountListener> countListeners = new ArrayList<>();
     private BufferedImage carrotImage;
+
+    public interface CountListener {
+        void countsChanged();
+    }
 
     // constructor
     public CropManager(int rows, int cols) {
@@ -68,27 +68,19 @@ public class CropManager {
         }
         tileCrops[row][col] = cropIndex;
         cropCounts[cropIndex]++;
-        updateCropCountLabels();
+        notifyCountListeners();
     }
 
-    // creates panel to display number of crops
-    public JPanel createPanel(int screenHeight) {
-        JPanel panel = new JPanel();
-        panel.setBorder(BorderFactory.createTitledBorder("Crops"));
-        panel.setLayout(new GridLayout(0, 1, 4, 4));
-        panel.setPreferredSize(new Dimension(150, screenHeight));
+    public int getCropCount(int cropIndex) {
+        return cropCounts[cropIndex];
+    }
 
-        for (int i = 0; i < CROP_COUNT; i++) {
-            JPanel cropRow = new JPanel(new BorderLayout(6, 0));
-            if (carrotImage != null) {
-                Image thumbnail = carrotImage.getScaledInstance(32, 32, Image.SCALE_SMOOTH);
-                cropRow.add(new JLabel(new ImageIcon(thumbnail)), BorderLayout.WEST);
-            }
-            cropCountLabels[i] = new JLabel(CROP_NAMES[i] + ": 0");
-            cropRow.add(cropCountLabels[i], BorderLayout.CENTER);
-            panel.add(cropRow);
-        }
-        return panel;
+    public BufferedImage getCropImage(int cropIndex) {
+        return carrotImage;
+    }
+
+    public void addCountListener(CountListener listener) {
+        countListeners.add(listener);
     }
 
     public void draw(Graphics2D graphics, int row, int col, int x, int y, int tileSize) {
@@ -103,11 +95,9 @@ public class CropManager {
         }
     }
 
-    private void updateCropCountLabels() {
-        for (int i = 0; i < CROP_COUNT; i++) {
-            if (cropCountLabels[i] != null) {
-                cropCountLabels[i].setText(CROP_NAMES[i] + ": " + cropCounts[i]);
-            }
+    private void notifyCountListeners() {
+        for (CountListener listener : countListeners) {
+            listener.countsChanged();
         }
     }
 

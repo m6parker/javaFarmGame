@@ -1,5 +1,7 @@
+package src.entities;
 import java.awt.Color;
 import java.util.Random;
+import src.managers.TileManager;
 
 public abstract class Mob {
     protected double x;
@@ -18,10 +20,10 @@ public abstract class Mob {
         chooseRandomDirection();
     }
 
-    public void update(int maxCol, int maxRow, int tileSize, Color[][] tileColors) {
+    public void update(int maxCol, int maxRow, int tileSize, TileManager tileManager) {
         int currentCol = (int) (x / tileSize);
         int currentRow = (int) (y / tileSize);
-        if (!isValidTile(tileColors, currentRow, currentCol)) {
+        if (!isValidTile(tileManager, currentRow, currentCol)) {
             return;
         }
 
@@ -36,7 +38,7 @@ public abstract class Mob {
         int nextCol = (int) (nextX / tileSize);
         int nextRow = (int) (nextY / tileSize);
 
-        if (nextCol != currentCol && !isValidTile(tileColors, currentRow, nextCol)) {
+        if (nextCol != currentCol && !isValidTile(tileManager, currentRow, nextCol)) {
             velocityX = -velocityX;
             x = velocityX > 0
                     ? currentCol * tileSize + radius
@@ -46,7 +48,7 @@ public abstract class Mob {
         }
 
         currentCol = (int) (x / tileSize);
-        if (nextRow != currentRow && !isValidTile(tileColors, nextRow, currentCol)) {
+        if (nextRow != currentRow && !isValidTile(tileManager, nextRow, currentCol)) {
             velocityY = -velocityY;
             y = velocityY > 0
                     ? currentRow * tileSize + radius
@@ -64,12 +66,12 @@ public abstract class Mob {
         return true;
     }
 
-    private boolean isValidTile(Color[][] tileColors, int row, int col) {
+    private boolean isValidTile(TileManager tileManager, int row, int col) {
         return row >= 0
-                && row < tileColors.length
+                && row < tileManager.getRowCount()
                 && col >= 0
-                && col < tileColors[row].length
-                && canEnterTile(tileColors[row][col]);
+                && col < tileManager.getColumnCount()
+                && canEnterTile(tileManager.getColor(row, col));
     }
 
     private void chooseRandomDirection() {
