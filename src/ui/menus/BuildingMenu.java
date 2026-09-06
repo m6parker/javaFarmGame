@@ -24,6 +24,7 @@ public class BuildingMenu {
         this.cropManager = cropManager;
     }
 
+    // create a menu for constructing buildings
     public JMenu create(int col, int row) {
         JMenu buildingsMenu = new JMenu("buildings");
         boolean unavailable = tileManager.isWaterTile(row, col)
@@ -31,6 +32,7 @@ public class BuildingMenu {
                 || isOccupied(row, col);
         buildingsMenu.setEnabled(!unavailable);
 
+        // add menu items for each building ytype
         for (int i = 0; i < BuildingManager.BUILDING_COUNT; i++) {
             Image building = buildingManager.getBuildingImage(i);
             JMenuItem buildingChoice = new JMenuItem(buildingManager.getBuildingName(i));

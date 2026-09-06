@@ -15,6 +15,7 @@ public class BuildingCountPanel extends JPanel implements BuildingManager.CountL
     private final BuildingManager buildingManager;
     private final JLabel[] countLabels = new JLabel[BuildingManager.BUILDING_COUNT];
 
+    // constructor
     public BuildingCountPanel(BuildingManager buildingManager, int screenHeight) {
         this.buildingManager = buildingManager;
         setBorder(BorderFactory.createTitledBorder("buildings"));
@@ -32,6 +33,7 @@ public class BuildingCountPanel extends JPanel implements BuildingManager.CountL
         }
     }
 
+    // create rows for each building type with thumbnail and count
     private void createRows() {
         for (int i = 0; i < BuildingManager.BUILDING_COUNT; i++) {
             JPanel buildingRow = new JPanel(new BorderLayout(6, 0));

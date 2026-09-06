@@ -32,12 +32,6 @@ public class TileMenu {
         this.cropMenu = new CropMenu(parent, tileManager, buildingManager, cropManager);
     }
 
-    public void showConstructionMenu(MouseEvent event, int col, int row) {
-        JPopupMenu menu = new JPopupMenu();
-        menu.add(buildingMenu.create(col, row));
-        menu.show(parent, event.getX(), event.getY());
-    }
-
     public void placeBuilding(int col, int row, int buildingIndex) {
         buildingMenu.placeBuilding(row, col, buildingIndex);
     }

@@ -13,6 +13,7 @@ public abstract class Mob {
     private int nextDirectionChange;
     private final Random random = new Random();
 
+    // constructor
     protected Mob(int startCol, int startRow, int tileSize) {
         double tileCenter = tileSize / 2.0;
         this.x = startCol * tileSize + tileCenter;
@@ -20,6 +21,8 @@ public abstract class Mob {
         chooseRandomDirection();
     }
 
+    // update position based on velocity
+    // check for collisions and change direction if needed
     public void update(int maxCol, int maxRow, int tileSize, TileManager tileManager) {
         int currentCol = (int) (x / tileSize);
         int currentRow = (int) (y / tileSize);
@@ -27,17 +30,20 @@ public abstract class Mob {
             return;
         }
 
+        // have the mob change direction after a certain number of updates
         directionChangeCounter++;
         if (directionChangeCounter >= nextDirectionChange) {
             chooseRandomDirection();
         }
 
+        // calculate the next position based on velocity
         double radius = getRadius();
         double nextX = x + velocityX;
         double nextY = y + velocityY;
         int nextCol = (int) (nextX / tileSize);
         int nextRow = (int) (nextY / tileSize);
 
+        // check for collisions with the edges of the grid
         if (nextCol != currentCol && !isValidTile(tileManager, currentRow, nextCol)) {
             velocityX = -velocityX;
             x = velocityX > 0
@@ -68,12 +74,13 @@ public abstract class Mob {
 
     private boolean isValidTile(TileManager tileManager, int row, int col) {
         return row >= 0
-                && row < tileManager.getRowCount()
-                && col >= 0
-                && col < tileManager.getColumnCount()
-                && canEnterTile(tileManager.getColor(row, col));
+            && row < tileManager.getRowCount()
+            && col >= 0
+            && col < tileManager.getColumnCount()
+            && canEnterTile(tileManager.getColor(row, col));
     }
 
+    // set a random direction for the mob to move in
     private void chooseRandomDirection() {
         double angle = random.nextDouble() * Math.PI * 2;
         velocityX = Math.cos(angle) * speed;
@@ -82,5 +89,6 @@ public abstract class Mob {
         nextDirectionChange = 45 + random.nextInt(76);
     }
 
+    // draw mob on the screen
     public abstract void draw(java.awt.Graphics2D graphics, int tileSize);
 }

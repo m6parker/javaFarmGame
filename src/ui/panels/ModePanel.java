@@ -32,8 +32,8 @@ public class ModePanel extends JPanel {
     private final JComboBox<String> cropSelector;
     private GameMode selectedMode = GameMode.SELECT;
 
-        public ModePanel(int screenHeight, BuildingManager buildingManager, CropManager cropManager,
-            ModeChangeListener listener) {
+    public ModePanel(int screenHeight, BuildingManager buildingManager, CropManager cropManager,
+        ModeChangeListener listener) {
         setBorder(BorderFactory.createTitledBorder("mode"));
         setLayout(new BorderLayout(8, 8));
         setPreferredSize(new Dimension(180, screenHeight));
@@ -52,6 +52,7 @@ public class ModePanel extends JPanel {
 
         JPanel modeChoices = new JPanel(new GridLayout(0, 1, 4, 4));
         ButtonGroup modeGroup = new ButtonGroup();
+        // add radio buttons for each game mode
         for (int i = 0; i < MODES.length; i++) {
             JRadioButton modeButton = new JRadioButton(MODE_LABELS[i]);
             modeButton.setActionCommand(MODES[i].name());

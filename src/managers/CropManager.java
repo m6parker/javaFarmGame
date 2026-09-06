@@ -68,6 +68,7 @@ public class CropManager {
         }
     }
 
+    // check if a crop can be planted on a tile based on the crop type and tile type
     public boolean canPlantOn(int cropIndex, TileManager tileManager, int row, int col) {
         if (cropIndex == 1) {
             return tileManager.isGrassTile(row, col) || tileManager.isSoilTile(row, col);
@@ -81,12 +82,14 @@ public class CropManager {
 
     public String getCropAt(int row, int col) {
         int cropIndex = tileCrops[row][col];
+        // return the crop name if a crop is planted
         return cropIndex >= 0 ? CROP_NAMES[cropIndex] : null;
     }
 
+    // plant crop and set it as seed
     public void plantCrop(int row, int col, int cropIndex) {
         int previousCrop = tileCrops[row][col];
-        if (previousCrop == cropIndex) {
+        if (previousCrop == cropIndex){
             return;
         }
         tileCrops[row][col] = cropIndex;
@@ -94,6 +97,7 @@ public class CropManager {
         growthTicks[row][col] = 0;
     }
 
+    // plant full grown crop on world generation
     public void plantMatureCrop(int row, int col, int cropIndex) {
         if (hasCrop(row, col)) {
             return;
@@ -148,6 +152,7 @@ public class CropManager {
         return true;
     }
 
+    // update the growth stage of all crops on the grid
     public void update() {
         for (int row = 0; row < tileCrops.length; row++) {
             for (int col = 0; col < tileCrops[row].length; col++) {
@@ -173,6 +178,7 @@ public class CropManager {
             return;
         }
 
+        // draw the crop image if it is mature
         if (cropStages[row][col] == MATURE_STAGE) {
             BufferedImage cropImage = getCropImage(cropIndex);
             if (cropImage != null) {
@@ -182,6 +188,7 @@ public class CropManager {
             }
         }
 
+        // draw a circle for the seedling
         int stage = cropStages[row][col];
         graphics.setColor(stage == SEED_STAGE ? new Color(110, 75, 35) : new Color(45, 150, 55));
         int size = stage == SEED_STAGE ? 8 : stage == SPROUT_STAGE ? 14 : 24;

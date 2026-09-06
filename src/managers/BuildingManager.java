@@ -23,15 +23,18 @@ public class BuildingManager {
     private final int[] buildingCounts = new int[BUILDING_COUNT];
     private final List<CountListener> countListeners = new ArrayList<>();
 
+    // interface for listening to building count changes
     public interface CountListener {
         void countsChanged();
     }
 
+    // constructor
     public BuildingManager(int rows, int cols) {
         tileBuildings = new int[rows][cols];
         initializeBuildingTiles();
     }
 
+    // draw building on tile if it exists
     public void draw(Graphics2D graphics, int row, int col, int x, int y, int tileSize) {
         int buildingIndex = tileBuildings[row][col];
         if (buildingIndex >= 0) {
@@ -57,6 +60,7 @@ public class BuildingManager {
         return buildingIndex >= 0 ? BUILDING_NAMES[buildingIndex] : null;
     }
 
+    // place building on the tile and update count
     public boolean placeBuilding(int row, int col, int buildingIndex) {
         int previousBuilding = tileBuildings[row][col];
         if (previousBuilding == buildingIndex) {
@@ -76,7 +80,9 @@ public class BuildingManager {
         if (buildingIndex < 0) {
             return false;
         }
+        // remove building from tile
         tileBuildings[row][col] = -1;
+        //update count
         buildingCounts[buildingIndex]--;
         notifyCountListeners();
         return true;
@@ -115,6 +121,7 @@ public class BuildingManager {
         }
     }
 
+    // notify listeners when building counts change
     private void notifyCountListeners() {
         for (CountListener listener : countListeners) {
             listener.countsChanged();

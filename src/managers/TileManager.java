@@ -79,6 +79,7 @@ public class TileManager {
     }
 
     public int[] findRandomTile(Color color, Random random) {
+        // randomly search for tile with color
         for (int attempt = 0; attempt < getRowCount() * getColumnCount(); attempt++) {
             int col = random.nextInt(getColumnCount());
             int row = random.nextInt(getRowCount());
@@ -87,6 +88,7 @@ public class TileManager {
             }
         }
 
+        // if no tile found search the entire grid for a tile with the specified color
         for (int row = 0; row < getRowCount(); row++) {
             for (int col = 0; col < getColumnCount(); col++) {
                 if (getColor(row, col).equals(color)) {
@@ -105,8 +107,10 @@ public class TileManager {
         return tiles[0].length;
     }
 
+    // create tiles with random terrain colors and properties
     private void initializeTiles() {
         Random random = new Random();
+        // randomly assign terrain colors
         for (int row = 0; row < getRowCount(); row++) {
             for (int col = 0; col < getColumnCount(); col++) {
                 int colorRoll = random.nextInt(20);
@@ -122,6 +126,7 @@ public class TileManager {
             }
         }
 
+        // add sand tiles next to water tiles
         for (int row = 0; row < getRowCount(); row++) {
             for (int col = 0; col < getColumnCount(); col++) {
                 if (!isWaterTile(row, col) && isNextToColor(row, col, WATER_COLOR)
@@ -132,6 +137,7 @@ public class TileManager {
         }
     }
 
+    // check the color of the tiles adjacent to the specified tile
     private boolean isNextToColor(int row, int col, Color color) {
         return (row > 0 && getColor(row - 1, col).equals(color))
                 || (row < getRowCount() - 1 && getColor(row + 1, col).equals(color))
