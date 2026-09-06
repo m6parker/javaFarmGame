@@ -20,10 +20,11 @@ public class ModePanel extends JPanel {
         "grass", "water", "lava", "sand", "soil", "stone"
     };
     private static final String[] MODE_LABELS = {
-        "select", "terrain paint", "construction", "crop planting"
+        "select", "terrain paint", "construction", "crop planting", "bulldoze"
     };
     private static final GameMode[] MODES = {
-        GameMode.SELECT, GameMode.TERRAIN_PAINT, GameMode.CONSTRUCTION, GameMode.CROP_PLANT
+        GameMode.SELECT, GameMode.TERRAIN_PAINT, GameMode.CONSTRUCTION,
+        GameMode.CROP_PLANT, GameMode.BULLDOZE
     };
 
     private final JComboBox<String> terrainSelector = new JComboBox<>(TERRAIN_NAMES);

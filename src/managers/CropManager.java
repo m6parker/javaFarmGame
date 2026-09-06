@@ -71,6 +71,17 @@ public class CropManager {
         notifyCountListeners();
     }
 
+    public boolean removeCrop(int row, int col) {
+        int cropIndex = tileCrops[row][col];
+        if (cropIndex < 0) {
+            return false;
+        }
+        tileCrops[row][col] = -1;
+        cropCounts[cropIndex]--;
+        notifyCountListeners();
+        return true;
+    }
+
     public int getCropCount(int cropIndex) {
         return cropCounts[cropIndex];
     }

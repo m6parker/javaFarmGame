@@ -170,6 +170,8 @@ public class GameWindow extends JPanel implements Runnable {
             } else if (currentMode == GameMode.CROP_PLANT) {
                 tileMenu.placeCrop(selectedCol, selectedRow,
                         modePanel.getSelectedCropIndex());
+            } else if (currentMode == GameMode.BULLDOZE) {
+                tileMenu.bulldoze(selectedCol, selectedRow);
             }
         }
 

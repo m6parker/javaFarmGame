@@ -71,6 +71,17 @@ public class BuildingManager {
         return true;
     }
 
+    public boolean removeBuilding(int row, int col) {
+        int buildingIndex = tileBuildings[row][col];
+        if (buildingIndex < 0) {
+            return false;
+        }
+        tileBuildings[row][col] = -1;
+        buildingCounts[buildingIndex]--;
+        notifyCountListeners();
+        return true;
+    }
+
     public int getBuildingCount(int buildingIndex) {
         return buildingCounts[buildingIndex];
     }
