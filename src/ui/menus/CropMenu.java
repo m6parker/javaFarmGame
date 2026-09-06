@@ -24,13 +24,13 @@ public class CropMenu {
 
     public JMenu create(int col, int row) {
         JMenu cropsMenu = new JMenu("crops");
-        boolean canPlant = tileManager.isSoilTile(row, col) && !isOccupied(row, col);
-        cropsMenu.setEnabled(canPlant);
+        boolean occupied = isOccupied(row, col);
+        cropsMenu.setEnabled(!occupied);
 
         for (int i = 0; i < CropManager.CROP_COUNT; i++) {
             JMenuItem cropChoice = new JMenuItem(cropManager.getCropName(i));
             cropChoice.setForeground(cropManager.getCropColor(i));
-            cropChoice.setEnabled(canPlant);
+            cropChoice.setEnabled(!occupied && cropManager.canPlantOn(i, tileManager, row, col));
             int cropIndex = i;
             cropChoice.addActionListener(action -> plantCrop(row, col, cropIndex));
             cropsMenu.add(cropChoice);
@@ -39,7 +39,7 @@ public class CropMenu {
     }
 
     public void plantCrop(int row, int col, int cropIndex) {
-        if (!tileManager.isSoilTile(row, col) || isOccupied(row, col)) {
+        if (!cropManager.canPlantOn(cropIndex, tileManager, row, col) || isOccupied(row, col)) {
             return;
         }
         cropManager.plantCrop(row, col, cropIndex);

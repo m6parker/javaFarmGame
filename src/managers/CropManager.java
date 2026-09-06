@@ -10,15 +10,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CropManager {
-    public static final int CROP_COUNT = 1;
+    public static final int CROP_COUNT = 2;
     public static final int SEED_STAGE = 0;
     public static final int SPROUT_STAGE = 1;
     public static final int GROWING_STAGE = 2;
     public static final int MATURE_STAGE = 3;
     private static final int GROWTH_TICKS_PER_STAGE = 180;
-    private static final String[] CROP_NAMES = {"carrot"};
+    private static final String[] CROP_NAMES = {"carrot", "tree"};
     // text color in crop selection menu
     private static final Color CARROT_COLOR = new Color(235, 125, 45);
+    private static final Color TREE_COLOR = new Color(34, 139, 34);
 
     private final int[][] tileCrops;
     private final int[][] cropStages;
@@ -26,6 +27,7 @@ public class CropManager {
     private final int[] harvestedCropCounts = new int[CROP_COUNT];
     private final List<CountListener> countListeners = new ArrayList<>();
     private BufferedImage carrotImage;
+    private BufferedImage treeImage;
 
     public interface CountListener {
         void countsChanged();
@@ -45,8 +47,9 @@ public class CropManager {
         try {
             // load image for crop from file
             carrotImage = ImageIO.read(new File("img/carrot.png"));
+            treeImage = ImageIO.read(new File("img/tree.png"));
         } catch (IOException exception) {
-            System.err.println("Could not load img/carrot.png: " + exception.getMessage());
+            System.err.println("Could not load image: " + exception.getMessage());
         }
     }
 
@@ -55,7 +58,21 @@ public class CropManager {
     }
 
     public Color getCropColor(int cropIndex) {
-        return CARROT_COLOR;
+        switch (cropIndex) {
+            case 0:
+                return CARROT_COLOR;
+            case 1:
+                return TREE_COLOR;
+            default:
+                return Color.GRAY;
+        }
+    }
+
+    public boolean canPlantOn(int cropIndex, TileManager tileManager, int row, int col) {
+        if (cropIndex == 1) {
+            return tileManager.isGrassTile(row, col) || tileManager.isSoilTile(row, col);
+        }
+        return tileManager.isSoilTile(row, col);
     }
 
     public boolean hasCrop(int row, int col) {
@@ -77,6 +94,15 @@ public class CropManager {
         growthTicks[row][col] = 0;
     }
 
+    public void plantMatureCrop(int row, int col, int cropIndex) {
+        if (hasCrop(row, col)) {
+            return;
+        }
+        tileCrops[row][col] = cropIndex;
+        cropStages[row][col] = MATURE_STAGE;
+        growthTicks[row][col] = 0;
+    }
+
     public boolean removeCrop(int row, int col) {
         int cropIndex = tileCrops[row][col];
         if (cropIndex < 0) {
@@ -93,7 +119,14 @@ public class CropManager {
     }
 
     public BufferedImage getCropImage(int cropIndex) {
-        return carrotImage;
+        switch (cropIndex) {
+            case 0:
+                return carrotImage;
+            case 1:
+                return treeImage;
+            default:
+                return null;
+        }
     }
 
     public int getCropStage(int row, int col) {
@@ -140,10 +173,13 @@ public class CropManager {
             return;
         }
 
-        if (cropStages[row][col] == MATURE_STAGE && carrotImage != null) {
-            Image scaledCarrot = carrotImage.getScaledInstance(tileSize, tileSize, Image.SCALE_SMOOTH);
-            graphics.drawImage(scaledCarrot, x, y, null);
-            return;
+        if (cropStages[row][col] == MATURE_STAGE) {
+            BufferedImage cropImage = getCropImage(cropIndex);
+            if (cropImage != null) {
+                Image scaledCrop = cropImage.getScaledInstance(tileSize, tileSize, Image.SCALE_SMOOTH);
+                graphics.drawImage(scaledCrop, x, y, null);
+                return;
+            }
         }
 
         int stage = cropStages[row][col];

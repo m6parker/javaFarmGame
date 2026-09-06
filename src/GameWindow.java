@@ -54,7 +54,19 @@ public class GameWindow extends JPanel implements Runnable {
         this.addMouseMotionListener(mouseH);
         this.setFocusable(true);
         modePanel = new ModePanel(screenHeight, buildingManager, cropManager, this::setMode);
+        plantTrees();
         spawnFish();
+    }
+
+    private void plantTrees() {
+        Random random = new Random();
+        for (int row = 0; row < maxScreenRow; row++) {
+            for (int col = 0; col < maxScreenCol; col++) {
+                if (tileManager.isGrassTile(row, col) && random.nextBoolean()) {
+                    cropManager.plantMatureCrop(row, col, 1);
+                }
+            }
+        }
     }
 
     public void startGameThread() {
@@ -125,8 +137,8 @@ public class GameWindow extends JPanel implements Runnable {
                 cropManager.draw(g2, row, col, x, y, tileSize);
 
                 // tile borders
-                g2.setColor(new Color(30, 30, 30));
-                g2.drawRect(x, y, tileSize, tileSize);
+                // g2.setColor(new Color(30, 30, 30));
+                // g2.drawRect(x, y, tileSize, tileSize);
 
                 // highlight clicked tile
                 if (col == selectedCol && row == selectedRow) {
@@ -162,9 +174,8 @@ public class GameWindow extends JPanel implements Runnable {
             if (currentMode == GameMode.SELECT) {
                 tileMenu.showInformation(e, selectedCol, selectedRow);
             } else if (currentMode == GameMode.TERRAIN_PAINT) {
-                tileManager.setColor(selectedRow, selectedCol,
+                tileMenu.paintTerrain(selectedCol, selectedRow,
                         modePanel.getSelectedTerrainColor());
-                repaint();
             } else if (currentMode == GameMode.CONSTRUCTION) {
                 tileMenu.placeBuilding(selectedCol, selectedRow,
                         modePanel.getSelectedBuildingIndex());
@@ -178,14 +189,14 @@ public class GameWindow extends JPanel implements Runnable {
             }
         }
 
-        @Override
-        public void mouseMoved(MouseEvent e) {
-            int hoveredCol = e.getX() / tileSize;
-            int hoveredRow = e.getY() / tileSize;
-            if (currentMode == GameMode.SELECT) {
-                tileMenu.showInformationOnHover(e, hoveredCol, hoveredRow);
-            }
-        }
+        // @Override
+        // public void mouseMoved(MouseEvent e) {
+        //     int hoveredCol = e.getX() / tileSize;
+        //     int hoveredRow = e.getY() / tileSize;
+        //     if (currentMode == GameMode.SELECT) {
+        //         tileMenu.showInformation(e, hoveredCol, hoveredRow);
+        //     }
+        // }
 
         @Override
         public void mouseExited(MouseEvent e) {

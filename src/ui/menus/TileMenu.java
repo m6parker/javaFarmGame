@@ -46,6 +46,14 @@ public class TileMenu {
         cropMenu.plantCrop(row, col, cropIndex);
     }
 
+    public void paintTerrain(int col, int row, java.awt.Color terrainColor) {
+        if (isOccupied(row, col)) {
+            return;
+        }
+        tileManager.setColor(row, col, terrainColor);
+        parent.repaint();
+    }
+
     public void bulldoze(int col, int row) {
         buildingManager.removeBuilding(row, col);
         cropManager.removeCrop(row, col);
@@ -60,10 +68,6 @@ public class TileMenu {
     }
 
     public void showInformation(MouseEvent event, int col, int row) {
-        showInformationBox(event, row, col);
-    }
-
-    public void showInformationOnHover(MouseEvent event, int col, int row) {
         showInformationBox(event, row, col);
     }
 
@@ -109,5 +113,9 @@ public class TileMenu {
         informationBox.setLocation(location.x + event.getX() + 12,
                 location.y + event.getY() + 12);
         informationBox.setVisible(true);
+    }
+
+    private boolean isOccupied(int row, int col) {
+        return buildingManager.hasBuilding(row, col) || cropManager.hasCrop(row, col);
     }
 }

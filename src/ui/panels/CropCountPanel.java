@@ -27,8 +27,11 @@ public class CropCountPanel extends JPanel implements CropManager.CountListener 
     @Override
     public void countsChanged() {
         for (int i = 0; i < countLabels.length; i++) {
-            countLabels[i].setText(cropManager.getCropName(i) + ": "
-                    + cropManager.getCropCount(i));
+            String cropName = cropManager.getCropName(i);
+            if (cropName == "tree"){
+                cropName = "wood";
+            }
+            countLabels[i].setText(cropName + ": " + cropManager.getCropCount(i));
         }
     }
 

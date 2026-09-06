@@ -74,6 +74,10 @@ public class TileManager {
         return getColor(row, col).equals(SOIL_COLOR);
     }
 
+    public boolean isGrassTile(int row, int col) {
+        return getColor(row, col).equals(GRASS_COLOR);
+    }
+
     public int[] findRandomTile(Color color, Random random) {
         for (int attempt = 0; attempt < getRowCount() * getColumnCount(); attempt++) {
             int col = random.nextInt(getColumnCount());
