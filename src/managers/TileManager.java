@@ -14,6 +14,9 @@ public class TileManager {
     private static final Color[] TERRAIN_COLORS = {
         GRASS_COLOR, WATER_COLOR, LAVA_COLOR, SAND_COLOR, SOIL_COLOR, STONE_COLOR
     };
+    private static final String[] TERRAIN_NAMES = {
+        "grass", "water", "lava", "sand", "soil", "stone"
+    };
 
     private final Tile[][] tiles;
 
@@ -36,6 +39,27 @@ public class TileManager {
 
     public static Color getTerrainColor(int terrainIndex) {
         return TERRAIN_COLORS[terrainIndex];
+    }
+
+    public String getTerrainName(int row, int col) {
+        for (int i = 0; i < TERRAIN_COLORS.length; i++) {
+            if (getColor(row, col).equals(TERRAIN_COLORS[i])) {
+                return TERRAIN_NAMES[i];
+            }
+        }
+        return "unknown";
+    }
+
+    public int getTemperature(int row, int col) {
+        return getTile(row, col).getTemperature();
+    }
+
+    public int getMoisture(int row, int col) {
+        return getTile(row, col).getMoisture();
+    }
+
+    public int getNutrients(int row, int col) {
+        return getTile(row, col).getNutrients();
     }
 
     public boolean isWaterTile(int row, int col) {
@@ -86,7 +110,11 @@ public class TileManager {
                         : colorRoll < 17 ? SOIL_COLOR
                         : colorRoll < 19 ? WATER_COLOR
                         : STONE_COLOR;
-                tiles[row][col] = new Tile(color);
+                tiles[row][col] = new Tile(
+                    color,
+                    random.nextInt(101),
+                    random.nextInt(101),
+                    random.nextInt(101));
             }
         }
 

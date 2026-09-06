@@ -100,6 +100,7 @@ public class GameWindow extends JPanel implements Runnable {
 
     public void update() {
         // update positions of mobs
+        cropManager.update();
         for (Mob component : movingComponents) {
             component.update(maxScreenCol, maxScreenRow, tileSize, tileManager);
         }
@@ -172,6 +173,8 @@ public class GameWindow extends JPanel implements Runnable {
                         modePanel.getSelectedCropIndex());
             } else if (currentMode == GameMode.BULLDOZE) {
                 tileMenu.bulldoze(selectedCol, selectedRow);
+            } else if (currentMode == GameMode.HARVEST) {
+                tileMenu.harvest(selectedCol, selectedRow);
             }
         }
 
@@ -198,9 +201,10 @@ public class GameWindow extends JPanel implements Runnable {
         GameWindow gamePanel = new GameWindow();
         window.setLayout(new BorderLayout());
         window.add(gamePanel, BorderLayout.CENTER);
-        JPanel inventoryPanel = new JPanel(new GridLayout(1, 2));
-        inventoryPanel.add(new BuildingCountPanel(gamePanel.buildingManager, gamePanel.screenHeight));
-        inventoryPanel.add(new CropCountPanel(gamePanel.cropManager, gamePanel.screenHeight));
+        JPanel inventoryPanel = new JPanel(new GridLayout(2, 1));
+        int inventoryHeight = gamePanel.screenHeight / 2;
+        inventoryPanel.add(new BuildingCountPanel(gamePanel.buildingManager, inventoryHeight));
+        inventoryPanel.add(new CropCountPanel(gamePanel.cropManager, inventoryHeight));
         window.add(gamePanel.modePanel, BorderLayout.WEST);
         window.add(inventoryPanel, BorderLayout.EAST);
         window.pack();

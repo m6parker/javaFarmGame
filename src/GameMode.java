@@ -5,5 +5,6 @@ public enum GameMode {
     TERRAIN_PAINT,
     CONSTRUCTION,
     CROP_PLANT,
-    BULLDOZE
+    BULLDOZE,
+    HARVEST
 }

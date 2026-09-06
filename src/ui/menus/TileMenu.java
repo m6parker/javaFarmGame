@@ -14,6 +14,7 @@ import javax.swing.BorderFactory;
 
 public class TileMenu {
     private final JPanel parent;
+    private final TileManager tileManager;
     private final BuildingManager buildingManager;
     private final CropManager cropManager;
     private final BuildingMenu buildingMenu;
@@ -24,6 +25,7 @@ public class TileMenu {
     public TileMenu(JPanel parent, TileManager tileManager, BuildingManager buildingManager,
             CropManager cropManager) {
         this.parent = parent;
+        this.tileManager = tileManager;
         this.buildingManager = buildingManager;
         this.cropManager = cropManager;
         this.buildingMenu = new BuildingMenu(parent, tileManager, buildingManager, cropManager);
@@ -51,6 +53,12 @@ public class TileMenu {
         parent.repaint();
     }
 
+    public void harvest(int col, int row) {
+        if (cropManager.harvestCrop(row, col)) {
+            parent.repaint();
+        }
+    }
+
     public void showInformation(MouseEvent event, int col, int row) {
         showInformationBox(event, row, col);
     }
@@ -65,22 +73,25 @@ public class TileMenu {
         }
     }
 
-    // shows tile info when occupied
+    // shows tile details and occupancy
     private void showInformationBox(MouseEvent event, int row, int col) {
-        if (!isOccupied(row, col)) {
-            hideInformationBox();
-            return;
-        }
-
         StringBuilder information = new StringBuilder("tile info\n");
+        information.append("terrain: ").append(tileManager.getTerrainName(row, col)).append('\n');
+        information.append("temperature: ").append(tileManager.getTemperature(row, col))
+            .append("%\n");
+        information.append("moisture: ").append(tileManager.getMoisture(row, col))
+            .append("%\n");
+        information.append("nutrients: ").append(tileManager.getNutrients(row, col))
+            .append("%\n");
         String buildingName = buildingManager.getBuildingAt(row, col);
         String cropName = cropManager.getCropAt(row, col);
 
-        if (buildingName != null) {
-            information.append("building: ").append(buildingName);
-        }
+        information.append("building: ").append(buildingName == null ? "none" : buildingName)
+            .append('\n');
+        information.append("crop: ").append(cropName == null ? "none" : cropName);
         if (cropName != null) {
-            information.append("crop: ").append(cropName);
+            information.append(" (stage ").append(cropManager.getCropStage(row, col) + 1)
+                .append('/').append(CropManager.MATURE_STAGE + 1).append(')');
         }
 
         JTextArea textBox = new JTextArea(information.toString());
@@ -98,9 +109,5 @@ public class TileMenu {
         informationBox.setLocation(location.x + event.getX() + 12,
                 location.y + event.getY() + 12);
         informationBox.setVisible(true);
-    }
-
-    private boolean isOccupied(int row, int col) {
-        return buildingManager.hasBuilding(row, col) || cropManager.hasCrop(row, col);
     }
 }
