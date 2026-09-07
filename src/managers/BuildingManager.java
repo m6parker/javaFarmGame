@@ -150,6 +150,14 @@ public class BuildingManager {
         return buildingCounts[buildingIndex];
     }
 
+    public int getDwellerCount() {
+        int count = 0;
+        for (int buildingIndex = 0; buildingIndex < FENCE_INDEX; buildingIndex++) {
+            count += buildingCounts[buildingIndex];
+        }
+        return count;
+    }
+
     public void addCountListener(CountListener listener) {
         countListeners.add(listener);
     }

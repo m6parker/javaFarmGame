@@ -5,6 +5,7 @@ import src.entities.Fish;
 import src.entities.LilyPad;
 import src.entities.Sheep;
 import src.entities.Chicken;
+import src.entities.Dweller;
 import src.entities.Mob;
 import src.managers.BuildingManager;
 import src.managers.CropManager;
@@ -13,6 +14,7 @@ import src.ui.menus.TileMenu;
 import src.ui.panels.BuildingCountPanel;
 import src.ui.panels.CropCountPanel;
 import src.ui.panels.ModePanel;
+import src.ui.panels.MobCountPanel;
 
 import java.awt.*;
 import java.awt.event.MouseAdapter;
@@ -38,6 +40,7 @@ public class GameWindow extends JPanel implements Runnable {
 
     // setup entities / grid state
     List<Mob> movingComponents = new ArrayList<>();
+    List<Dweller> dwellers = new ArrayList<>();
     List<LilyPad> lilyPads = new ArrayList<>();
     TileManager tileManager = new TileManager(maxScreenRow, maxScreenCol);
     BuildingManager buildingManager = new BuildingManager(maxScreenRow, maxScreenCol);
@@ -50,6 +53,7 @@ public class GameWindow extends JPanel implements Runnable {
     int hoveredCol = -1;
     int hoveredRow = -1;
     int hoveredFenceSide = BuildingManager.FENCE_BOTTOM;
+    MobCountPanel mobCountPanel;
 
     // constructor
     public GameWindow() {
@@ -175,9 +179,32 @@ public class GameWindow extends JPanel implements Runnable {
     public void update() {
         // update positions of mobs
         cropManager.update();
+        updateDwellers();
+        if (mobCountPanel != null) {
+            mobCountPanel.refreshCounts();
+        }
         for (Mob component : movingComponents) {
             component.update(maxScreenCol, maxScreenRow, tileSize, tileManager,
                     buildingManager, cropManager);
+        }
+    }
+
+    private void updateDwellers() {
+        int targetCount = buildingManager.getDwellerCount();
+        while (dwellers.size() < targetCount) {
+            Random random = new Random();
+            int[] startTile = findRandomAvailableTile(TileManager.GRASS_COLOR, random);
+            if (startTile == null) {
+                return;
+            }
+            Dweller dweller = new Dweller(startTile[0], startTile[1], tileSize,
+                    maxScreenCol, maxScreenRow, tileManager);
+            dwellers.add(dweller);
+            movingComponents.add(dweller);
+        }
+        while (dwellers.size() > targetCount) {
+            Dweller dweller = dwellers.remove(dwellers.size() - 1);
+            movingComponents.remove(dweller);
         }
     }
 
@@ -348,10 +375,12 @@ public class GameWindow extends JPanel implements Runnable {
         GameWindow gamePanel = new GameWindow();
         window.setLayout(new BorderLayout());
         window.add(gamePanel, BorderLayout.CENTER);
-        JPanel inventoryPanel = new JPanel(new GridLayout(2, 1));
-        int inventoryHeight = gamePanel.screenHeight / 2;
+        JPanel inventoryPanel = new JPanel(new GridLayout(3, 1));
+        int inventoryHeight = gamePanel.screenHeight / 3;
         inventoryPanel.add(new BuildingCountPanel(gamePanel.buildingManager, inventoryHeight));
         inventoryPanel.add(new CropCountPanel(gamePanel.cropManager, inventoryHeight));
+        gamePanel.mobCountPanel = new MobCountPanel(gamePanel.movingComponents, inventoryHeight);
+        inventoryPanel.add(gamePanel.mobCountPanel);
         window.add(gamePanel.modePanel, BorderLayout.WEST);
         window.add(inventoryPanel, BorderLayout.EAST);
         window.pack();
