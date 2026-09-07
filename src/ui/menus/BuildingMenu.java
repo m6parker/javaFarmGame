@@ -28,8 +28,7 @@ public class BuildingMenu {
     public JMenu create(int col, int row) {
         JMenu buildingsMenu = new JMenu("buildings");
         boolean unavailable = tileManager.isWaterTile(row, col)
-            || tileManager.isLavaTile(row, col)
-                || isOccupied(row, col);
+            || tileManager.isLavaTile(row, col);
         buildingsMenu.setEnabled(!unavailable);
 
         // add menu items for each building ytype
@@ -40,7 +39,8 @@ public class BuildingMenu {
                 Image thumbnail = building.getScaledInstance(32, 32, Image.SCALE_SMOOTH);
                 buildingChoice.setIcon(new ImageIcon(thumbnail));
             }
-            buildingChoice.setEnabled(!unavailable);
+                buildingChoice.setEnabled(!unavailable
+                    && (i == BuildingManager.FENCE_INDEX || !isOccupied(row, col)));
             int buildingIndex = i;
             buildingChoice.addActionListener(action -> placeBuilding(row, col, buildingIndex));
             buildingsMenu.add(buildingChoice);
@@ -49,12 +49,24 @@ public class BuildingMenu {
     }
 
     public void placeBuilding(int row, int col, int buildingIndex) {
-        if (tileManager.isWaterTile(row, col) || tileManager.isLavaTile(row, col)
-            || isOccupied(row, col)) {
+        placeBuilding(row, col, buildingIndex, BuildingManager.FENCE_BOTTOM);
+    }
+
+    public void placeBuilding(int row, int col, int buildingIndex, int fenceSide) {
+        if (!canPlaceBuilding(row, col, buildingIndex)) {
             return;
         }
-        buildingManager.placeBuilding(row, col, buildingIndex);
+        buildingManager.placeBuilding(row, col, buildingIndex, fenceSide);
         parent.repaint();
+    }
+
+    public boolean canPlaceBuilding(int row, int col) {
+        return canPlaceBuilding(row, col, BuildingManager.FENCE_INDEX);
+    }
+
+    public boolean canPlaceBuilding(int row, int col, int buildingIndex) {
+        return !tileManager.isWaterTile(row, col) && !tileManager.isLavaTile(row, col)
+                && (buildingIndex == BuildingManager.FENCE_INDEX || !isOccupied(row, col));
     }
 
     private boolean isOccupied(int row, int col) {

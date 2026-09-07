@@ -2,6 +2,9 @@ package src;
 import javax.swing.*;
 
 import src.entities.Fish;
+import src.entities.LilyPad;
+import src.entities.Sheep;
+import src.entities.Chicken;
 import src.entities.Mob;
 import src.managers.BuildingManager;
 import src.managers.CropManager;
@@ -35,14 +38,18 @@ public class GameWindow extends JPanel implements Runnable {
 
     // setup entities / grid state
     List<Mob> movingComponents = new ArrayList<>();
+    List<LilyPad> lilyPads = new ArrayList<>();
     TileManager tileManager = new TileManager(maxScreenRow, maxScreenCol);
     BuildingManager buildingManager = new BuildingManager(maxScreenRow, maxScreenCol);
     CropManager cropManager = new CropManager(maxScreenRow, maxScreenCol);
-    TileMenu tileMenu = new TileMenu(this, tileManager, buildingManager, cropManager);
+    TileMenu tileMenu = new TileMenu(this, tileManager, buildingManager, cropManager, lilyPads);
     ModePanel modePanel;
     GameMode currentMode = GameMode.SELECT;
     int selectedCol = -1;
     int selectedRow = -1;
+    int hoveredCol = -1;
+    int hoveredRow = -1;
+    int hoveredFenceSide = BuildingManager.FENCE_BOTTOM;
 
     // constructor
     public GameWindow() {
@@ -55,7 +62,10 @@ public class GameWindow extends JPanel implements Runnable {
         this.setFocusable(true);
         modePanel = new ModePanel(screenHeight, buildingManager, cropManager, this::setMode);
         plantTrees();
-        spawnFish();
+        spawnLilyPads();
+        spawnFish(5);
+        spawnSheep(5);
+        spawnChicken(5);
     }
 
     private void plantTrees() {
@@ -64,6 +74,19 @@ public class GameWindow extends JPanel implements Runnable {
             for (int col = 0; col < maxScreenCol; col++) {
                 if (tileManager.isGrassTile(row, col) && random.nextBoolean()) {
                     cropManager.plantMatureCrop(row, col, 1);
+                }
+            }
+        }
+    }
+
+    private void spawnLilyPads() {
+        Random random = new Random();
+        for (int row = 0; row < maxScreenRow; row++) {
+            for (int col = 0; col < maxScreenCol; col++) {
+                boolean available = !cropManager.hasCrop(row, col)
+                        && !buildingManager.hasBuilding(row, col);
+                if (available && tileManager.isWaterTile(row, col) && random.nextBoolean()) {
+                    lilyPads.add(new LilyPad(row, col, random.nextInt(2)));
                 }
             }
         }
@@ -97,10 +120,10 @@ public class GameWindow extends JPanel implements Runnable {
         }
     }
 
-    public void spawnFish(){
+    public void spawnFish(int count) {
         Random rand = new Random();
-        for (int i = 0; i < 5; i++) {
-            int[] startTile = tileManager.findRandomTile(TileManager.WATER_COLOR, rand);
+        for (int i = 0; i < count; i++) {
+            int[] startTile = findRandomAvailableTile(TileManager.WATER_COLOR, rand);
             if (startTile == null) {
                 break;
             }
@@ -110,11 +133,51 @@ public class GameWindow extends JPanel implements Runnable {
         }
     }
 
+    public void spawnSheep(int count){
+        Random rand = new Random();
+        for (int i = 0; i < count; i++) {
+            int[] startTile = findRandomAvailableTile(TileManager.GRASS_COLOR, rand);
+            if (startTile == null) {
+                break;
+            }
+            movingComponents.add(new Sheep(
+                    startTile[0], startTile[1], tileSize,
+                    maxScreenCol, maxScreenRow, tileManager));
+        }
+    }
+
+    public void spawnChicken(int count){
+        Random rand = new Random();
+        for (int i = 0; i < count; i++) {
+            int[] startTile = findRandomAvailableTile(TileManager.GRASS_COLOR, rand);
+            if (startTile == null) {
+                break;
+            }
+            movingComponents.add(new Chicken(
+                    startTile[0], startTile[1], tileSize,
+                    maxScreenCol, maxScreenRow, tileManager));
+        }
+    }
+
+
+    private int[] findRandomAvailableTile(Color terrainColor, Random random) {
+        int maxAttempts = maxScreenCol * maxScreenRow;
+        for (int attempt = 0; attempt < maxAttempts; attempt++) {
+            int[] tile = tileManager.findRandomTile(terrainColor, random);
+            if (tile != null && !buildingManager.hasBuilding(tile[1], tile[0])
+                    && !cropManager.hasCrop(tile[1], tile[0])) {
+                return tile;
+            }
+        }
+        return null;
+    }
+
     public void update() {
         // update positions of mobs
         cropManager.update();
         for (Mob component : movingComponents) {
-            component.update(maxScreenCol, maxScreenRow, tileSize, tileManager);
+            component.update(maxScreenCol, maxScreenRow, tileSize, tileManager,
+                    buildingManager, cropManager);
         }
     }
 
@@ -123,7 +186,7 @@ public class GameWindow extends JPanel implements Runnable {
         super.paintComponent(g);
         Graphics2D g2 = (Graphics2D) g;
 
-        // tile map
+        // draw terrain
         for (int row = 0; row < maxScreenRow; row++) {
             for (int col = 0; col < maxScreenCol; col++) {
                 int x = col * tileSize;
@@ -131,10 +194,40 @@ public class GameWindow extends JPanel implements Runnable {
 
                 g2.setColor(tileManager.getColor(row, col));
                 g2.fillRect(x, y, tileSize, tileSize);
+            }
+        }
 
-                // draw buildings and crops
-                buildingManager.draw(g2, row, col, x, y, tileSize);
+        // draw fish below lily pads
+        for (Mob component : movingComponents) {
+            if (component instanceof Fish) {
+                component.draw(g2, tileSize);
+            }
+        }
+
+        // draw lily pads, crops, and buildings
+        for (int row = 0; row < maxScreenRow; row++) {
+            for (int col = 0; col < maxScreenCol; col++) {
+                int x = col * tileSize;
+                int y = row * tileSize;
+
+                for (LilyPad lilyPad : lilyPads) {
+                    if (lilyPad.isAt(row, col)) {
+                        lilyPad.draw(g2, tileSize);
+                    }
+                }
+
+                // draw crops and buildings
                 cropManager.draw(g2, row, col, x, y, tileSize);
+                buildingManager.draw(g2, row, col, x, y, tileSize);
+
+                if (currentMode == GameMode.CONSTRUCTION
+                    && modePanel.getSelectedBuildingIndex() == BuildingManager.FENCE_INDEX
+                    && col == hoveredCol && row == hoveredRow
+                        && tileMenu.canPlaceBuilding(col, row,
+                            modePanel.getSelectedBuildingIndex())) {
+                    buildingManager.drawFencePreview(g2, row, col, x, y, tileSize,
+                        hoveredFenceSide);
+                }
 
                 // tile borders
                 // g2.setColor(new Color(30, 30, 30));
@@ -150,7 +243,9 @@ public class GameWindow extends JPanel implements Runnable {
 
         // moving components
         for (Mob component : movingComponents) {
-            component.draw(g2, tileSize);
+            if (!(component instanceof Fish)) {
+                component.draw(g2, tileSize);
+            }
         }
 
         g2.dispose();
@@ -159,7 +254,10 @@ public class GameWindow extends JPanel implements Runnable {
     // clicking tiles
     public void setMode(GameMode mode) {
         currentMode = mode;
+        hoveredCol = -1;
+        hoveredRow = -1;
         tileMenu.hideInformationBox();
+        repaint();
     }
 
     private class MouseHandler extends MouseAdapter {
@@ -178,7 +276,7 @@ public class GameWindow extends JPanel implements Runnable {
                         modePanel.getSelectedTerrainColor());
             } else if (currentMode == GameMode.CONSTRUCTION) {
                 tileMenu.placeBuilding(selectedCol, selectedRow,
-                        modePanel.getSelectedBuildingIndex());
+                        modePanel.getSelectedBuildingIndex(), getNearestTileSide(mouseX, mouseY));
             } else if (currentMode == GameMode.CROP_PLANT) {
                 tileMenu.placeCrop(selectedCol, selectedRow,
                         modePanel.getSelectedCropIndex());
@@ -187,6 +285,41 @@ public class GameWindow extends JPanel implements Runnable {
             } else if (currentMode == GameMode.HARVEST) {
                 tileMenu.harvest(selectedCol, selectedRow);
             }
+        }
+
+        @Override
+        public void mouseMoved(MouseEvent e) {
+            if (currentMode == GameMode.CONSTRUCTION) {
+                hoveredCol = e.getX() / tileSize;
+                hoveredRow = e.getY() / tileSize;
+                hoveredFenceSide = getNearestTileSide(e.getX(), e.getY());
+            } else {
+                hoveredCol = -1;
+                hoveredRow = -1;
+            }
+            repaint();
+        }
+
+        private int getNearestTileSide(int mouseX, int mouseY) {
+            int localX = mouseX % tileSize;
+            int localY = mouseY % tileSize;
+            int distanceToLeft = localX;
+            int distanceToRight = tileSize - localX;
+            int distanceToTop = localY;
+            int distanceToBottom = tileSize - localY;
+            int nearestDistance = Math.min(Math.min(distanceToLeft, distanceToRight),
+                    Math.min(distanceToTop, distanceToBottom));
+
+            if (nearestDistance == distanceToTop) {
+                return BuildingManager.FENCE_TOP;
+            }
+            if (nearestDistance == distanceToRight) {
+                return BuildingManager.FENCE_RIGHT;
+            }
+            if (nearestDistance == distanceToBottom) {
+                return BuildingManager.FENCE_BOTTOM;
+            }
+            return BuildingManager.FENCE_LEFT;
         }
 
         // @Override
@@ -200,7 +333,10 @@ public class GameWindow extends JPanel implements Runnable {
 
         @Override
         public void mouseExited(MouseEvent e) {
+            hoveredCol = -1;
+            hoveredRow = -1;
             tileMenu.hideInformationBox();
+            repaint();
         }
     }
 

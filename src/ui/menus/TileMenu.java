@@ -8,6 +8,9 @@ import javax.swing.JWindow;
 import src.managers.BuildingManager;
 import src.managers.CropManager;
 import src.managers.TileManager;
+import src.entities.LilyPad;
+
+import java.util.List;
 
 import javax.swing.JTextArea;
 import javax.swing.BorderFactory;
@@ -19,24 +22,48 @@ public class TileMenu {
     private final CropManager cropManager;
     private final BuildingMenu buildingMenu;
     private final CropMenu cropMenu;
+    private final List<LilyPad> lilyPads;
     private JWindow informationBox;
 
     // constructor
     public TileMenu(JPanel parent, TileManager tileManager, BuildingManager buildingManager,
-            CropManager cropManager) {
+            CropManager cropManager, List<LilyPad> lilyPads) {
         this.parent = parent;
         this.tileManager = tileManager;
         this.buildingManager = buildingManager;
         this.cropManager = cropManager;
+        this.lilyPads = lilyPads;
         this.buildingMenu = new BuildingMenu(parent, tileManager, buildingManager, cropManager);
         this.cropMenu = new CropMenu(parent, tileManager, buildingManager, cropManager);
     }
 
     public void placeBuilding(int col, int row, int buildingIndex) {
+        if (canPlaceBuilding(col, row, buildingIndex)) {
+            removeLilyPad(row, col);
+        }
         buildingMenu.placeBuilding(row, col, buildingIndex);
     }
 
+    public void placeBuilding(int col, int row, int buildingIndex, int fenceSide) {
+        if (canPlaceBuilding(col, row, buildingIndex)) {
+            removeLilyPad(row, col);
+        }
+        buildingMenu.placeBuilding(row, col, buildingIndex, fenceSide);
+    }
+
+    public boolean canPlaceBuilding(int col, int row) {
+        return buildingMenu.canPlaceBuilding(row, col);
+    }
+
+    public boolean canPlaceBuilding(int col, int row, int buildingIndex) {
+        return buildingMenu.canPlaceBuilding(row, col, buildingIndex);
+    }
+
     public void placeCrop(int col, int row, int cropIndex) {
+        if (cropManager.canPlantOn(cropIndex, tileManager, row, col)
+                && !isOccupied(row, col)) {
+            removeLilyPad(row, col);
+        }
         cropMenu.plantCrop(row, col, cropIndex);
     }
 
@@ -44,13 +71,16 @@ public class TileMenu {
         if (isOccupied(row, col)) {
             return;
         }
+        removeLilyPad(row, col);
         tileManager.setColor(row, col, terrainColor);
         parent.repaint();
     }
 
     public void bulldoze(int col, int row) {
         buildingManager.removeBuilding(row, col);
+        buildingManager.removeFences(row, col);
         cropManager.removeCrop(row, col);
+        removeLilyPad(row, col);
         hideInformationBox();
         parent.repaint();
     }
@@ -111,5 +141,9 @@ public class TileMenu {
 
     private boolean isOccupied(int row, int col) {
         return buildingManager.hasBuilding(row, col) || cropManager.hasCrop(row, col);
+    }
+
+    private void removeLilyPad(int row, int col) {
+        LilyPad.removeAt(lilyPads, row, col);
     }
 }
