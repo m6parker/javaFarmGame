@@ -1,31 +1,28 @@
-package src.entities;
+package src.entities.mobs;
 import java.awt.Color;
 import java.awt.Graphics2D;
+
+import src.entities.Mob;
 import src.managers.TileManager;
 
-public class Fish extends Mob {
-    public Fish(int startCol, int startRow, int tileSize, int maxCol, int maxRow,
+public class Sheep extends Mob {
+    public Sheep(int startCol, int startRow, int tileSize, int maxCol, int maxRow,
             TileManager tileManager) {
         super(startCol, startRow, tileSize);
     }
 
     @Override
-    // Override the canEnterTile method to allow movement only on blue tiles
+    // Override the canEnterTile method to allow movement only on grass or soil tiles
     protected boolean canEnterTile(Color tileColor) {
-        return tileColor.equals(new Color(66, 135, 245));
-    }
-
-    @Override
-    protected boolean canPause() {
-        return false;
+        return tileColor.equals(TileManager.GRASS_COLOR) || tileColor.equals(TileManager.SOIL_COLOR);
     }
 
     @Override
     public void draw(Graphics2D graphics, int tileSize) {
-        graphics.setColor(Color.ORANGE);
-        int size = 10;
+        graphics.setColor(Color.WHITE);
+        int size = 15;
         graphics.fillOval((int) x - size / 2, (int) y - size / 2, size, size);
-        graphics.setColor(Color.RED);
+        graphics.setColor(Color.GRAY);
         graphics.drawOval((int) x - size / 2, (int) y - size / 2, size, size);
     }
 }

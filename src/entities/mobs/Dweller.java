@@ -1,7 +1,9 @@
-package src.entities;
+package src.entities.mobs;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
+
+import src.entities.Mob;
 import src.managers.TileManager;
 
 public class Dweller extends Mob {

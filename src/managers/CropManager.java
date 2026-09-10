@@ -8,6 +8,7 @@ import java.io.IOException;
 import javax.imageio.ImageIO;
 import java.util.ArrayList;
 import java.util.List;
+import src.entities.crops.Crop;
 
 public class CropManager {
     public static final int CROP_COUNT = 2;
@@ -22,9 +23,7 @@ public class CropManager {
     private static final Color CARROT_COLOR = new Color(235, 125, 45);
     private static final Color TREE_COLOR = new Color(34, 139, 34);
 
-    private final int[][] tileCrops;
-    private final int[][] cropStages;
-    private final int[][] growthTicks;
+    private final Crop[][] tileCrops;
     private final int[] harvestedCropCounts = new int[CROP_COUNT];
     private final List<CountListener> countListeners = new ArrayList<>();
     private BufferedImage carrotImage;
@@ -37,14 +36,7 @@ public class CropManager {
     // constructor
     public CropManager(int rows, int cols) {
         // create 2D array of crops
-        tileCrops = new int[rows][cols];
-        cropStages = new int[rows][cols];
-        growthTicks = new int[rows][cols];
-        for (int row = 0; row < rows; row++) {
-            for (int col = 0; col < cols; col++) {
-                tileCrops[row][col] = -1;
-            }
-        }
+        tileCrops = new Crop[rows][cols];
         try {
             // load image for crop from file
             carrotImage = ImageIO.read(new File("img/carrot.png"));
@@ -55,18 +47,11 @@ public class CropManager {
     }
 
     public String getCropName(int cropIndex) {
-        return CROP_NAMES[cropIndex];
+        return createCrop(cropIndex).getName();
     }
 
     public Color getCropColor(int cropIndex) {
-        switch (cropIndex) {
-            case 0:
-                return CARROT_COLOR;
-            case 1:
-                return TREE_COLOR;
-            default:
-                return Color.GRAY;
-        }
+        return createCrop(cropIndex).getColor();
     }
 
     // check if a crop can be planted on a tile based on the crop type and tile type
@@ -78,24 +63,23 @@ public class CropManager {
     }
 
     public boolean hasCrop(int row, int col) {
-        return tileCrops[row][col] >= 0;
+        return tileCrops[row][col] != null;
     }
 
     public String getCropAt(int row, int col) {
-        int cropIndex = tileCrops[row][col];
-        // return the crop name if a crop is planted
-        return cropIndex >= 0 ? CROP_NAMES[cropIndex] : null;
+        Crop crop = tileCrops[row][col];
+        return crop == null ? null : crop.getName();
     }
 
     // plant crop and set it as seed
     public void plantCrop(int row, int col, int cropIndex) {
-        int previousCrop = tileCrops[row][col];
-        if (previousCrop == cropIndex){
+        Crop previousCrop = tileCrops[row][col];
+        if (previousCrop != null && previousCrop.getTypeIndex() == cropIndex){
             return;
         }
-        tileCrops[row][col] = cropIndex;
-        cropStages[row][col] = SEED_STAGE;
-        growthTicks[row][col] = 0;
+        Crop crop = createCrop(cropIndex);
+        crop.resetForPlanting();
+        tileCrops[row][col] = crop;
     }
 
     // plant full grown crop on world generation
@@ -103,19 +87,16 @@ public class CropManager {
         if (hasCrop(row, col)) {
             return;
         }
-        tileCrops[row][col] = cropIndex;
-        cropStages[row][col] = MATURE_STAGE;
-        growthTicks[row][col] = 0;
+        Crop crop = createCrop(cropIndex);
+        crop.setMature(MATURE_STAGE);
+        tileCrops[row][col] = crop;
     }
 
     public boolean removeCrop(int row, int col) {
-        int cropIndex = tileCrops[row][col];
-        if (cropIndex < 0) {
+        if (tileCrops[row][col] == null) {
             return false;
         }
-        tileCrops[row][col] = -1;
-        cropStages[row][col] = SEED_STAGE;
-        growthTicks[row][col] = 0;
+        tileCrops[row][col] = null;
         return true;
     }
 
@@ -124,29 +105,22 @@ public class CropManager {
     }
 
     public BufferedImage getCropImage(int cropIndex) {
-        switch (cropIndex) {
-            case 0:
-                return carrotImage;
-            case 1:
-                return treeImage;
-            default:
-                return null;
-        }
+        return createCrop(cropIndex).getImage();
     }
 
     public int getCropStage(int row, int col) {
-        return cropStages[row][col];
+        return tileCrops[row][col].getStage();
     }
 
     public boolean isMature(int row, int col) {
-        return hasCrop(row, col) && getCropStage(row, col) == MATURE_STAGE;
+        return hasCrop(row, col) && tileCrops[row][col].getStage() == MATURE_STAGE;
     }
 
     public boolean harvestCrop(int row, int col) {
         if (!isMature(row, col)) {
             return false;
         }
-        int cropIndex = tileCrops[row][col];
+        int cropIndex = tileCrops[row][col].getTypeIndex();
         removeCrop(row, col);
         harvestedCropCounts[cropIndex]++;
         notifyCountListeners();
@@ -157,40 +131,24 @@ public class CropManager {
     public void update(TileManager tileManager) {
         for (int row = 0; row < tileCrops.length; row++) {
             for (int col = 0; col < tileCrops[row].length; col++) {
-                if (tileCrops[row][col] < 0 || cropStages[row][col] >= MATURE_STAGE) {
+                Crop crop = tileCrops[row][col];
+                if (crop == null || crop.getStage() >= MATURE_STAGE) {
                     continue;
                 }
-                growthTicks[row][col]++;
-                int cropIndex = tileCrops[row][col];
-                int ticksPerStage = getGrowthTicksPerStage(cropIndex, tileManager, row, col);
-                if (growthTicks[row][col] >= ticksPerStage) {
-                    growthTicks[row][col] = 0;
-                    cropStages[row][col]++;
-                }
+                int ticksPerStage = getGrowthTicksPerStage(crop, tileManager, row, col);
+                crop.advanceGrowth(ticksPerStage, MATURE_STAGE);
             }
         }
     }
 
-    private int getGrowthTicksPerStage(int cropIndex, TileManager tileManager, int row, int col) {
-        double suitability = getAttributeSuitability(cropIndex, tileManager, row, col);
+    private int getGrowthTicksPerStage(Crop crop, TileManager tileManager, int row, int col) {
+        double suitability = getAttributeSuitability(crop, tileManager, row, col);
         double growthRange = SLOWEST_GROWTH_TICKS_PER_STAGE - FASTEST_GROWTH_TICKS_PER_STAGE;
         return (int) Math.round(SLOWEST_GROWTH_TICKS_PER_STAGE - growthRange * suitability);
     }
 
-    private double getAttributeSuitability(int cropIndex, TileManager tileManager, int row, int col) {
-        int[][] idealRanges;
-        switch (cropIndex) {
-            case 0:
-                // carrots prefer warm / nutrientful soil and high moisture.
-                idealRanges = new int[][] {{35, 70}, {60, 80}, {45, 85}};
-                break;
-            case 1:
-                idealRanges = new int[][] {{30, 75}, {30, 70}, {35, 80}};
-                break;
-            default:
-                return 0;
-        }
-
+    private double getAttributeSuitability(Crop crop, TileManager tileManager,
+            int row, int col) {
         int[] attributes = {
             tileManager.getTemperature(row, col),
             tileManager.getMoisture(row, col),
@@ -198,8 +156,9 @@ public class CropManager {
         };
         double suitabilityTotal = 0;
         for (int attribute = 0; attribute < attributes.length; attribute++) {
-            int minimum = idealRanges[attribute][0];
-            int maximum = idealRanges[attribute][1];
+            int[] idealRange = crop.getIdealAttributeRange(attribute);
+            int minimum = idealRange[0];
+            int maximum = idealRange[1];
             if (attributes[attribute] < minimum) {
                 suitabilityTotal += (double) attributes[attribute] / minimum;
             } else if (attributes[attribute] > maximum) {
@@ -215,32 +174,67 @@ public class CropManager {
         countListeners.add(listener);
     }
 
+    public int getCropLevel(int row, int col) {
+        return tileCrops[row][col] == null ? 0 : tileCrops[row][col].getLevel();
+    }
+
+    public int getCropSize(int row, int col) {
+        return tileCrops[row][col] == null ? 0 : tileCrops[row][col].getSize();
+    }
+
+    public boolean upgradeCrop(int row, int col) {
+        Crop crop = tileCrops[row][col];
+        if (crop == null) {
+            return false;
+        }
+        crop.upgrade();
+        return true;
+    }
+
     public void draw(Graphics2D graphics, int row, int col, int x, int y, int tileSize) {
-        int cropIndex = tileCrops[row][col];
-        if (cropIndex < 0) {
+        Crop crop = tileCrops[row][col];
+        if (crop == null) {
             return;
         }
 
         // draw the crop image if it is mature
-        if (cropStages[row][col] == MATURE_STAGE) {
-            BufferedImage cropImage = getCropImage(cropIndex);
+        if (crop.getStage() == MATURE_STAGE) {
+            BufferedImage cropImage = crop.getImage();
             if (cropImage != null) {
-                Image scaledCrop = cropImage.getScaledInstance(tileSize, tileSize, Image.SCALE_SMOOTH);
-                graphics.drawImage(scaledCrop, x, y, null);
+                int cropSize = tileSize * crop.getSize();
+                int cropX = x - (cropSize - tileSize) / 2;
+                int cropY = y - (cropSize - tileSize) / 2;
+                Image scaledCrop = cropImage.getScaledInstance(
+                        cropSize, cropSize, Image.SCALE_SMOOTH);
+                graphics.drawImage(scaledCrop, cropX, cropY, null);
                 return;
             }
         }
 
         // draw a circle for the seedling
-        int stage = cropStages[row][col];
+        int stage = crop.getStage();
         graphics.setColor(stage == SEED_STAGE ? new Color(110, 75, 35) : new Color(45, 150, 55));
-        int size = stage == SEED_STAGE ? 8 : stage == SPROUT_STAGE ? 14 : 24;
+        int baseSize = stage == SEED_STAGE ? 8 : stage == SPROUT_STAGE ? 14 : 24;
+        int size = baseSize * crop.getSize();
         graphics.fillOval(x + (tileSize - size) / 2, y + (tileSize - size) / 2, size, size);
     }
 
     private void notifyCountListeners() {
         for (CountListener listener : countListeners) {
             listener.countsChanged();
+        }
+    }
+
+    private Crop createCrop(int cropIndex) {
+        switch (cropIndex) {
+            case 0:
+                return new Crop(cropIndex, CROP_NAMES[cropIndex], CARROT_COLOR, carrotImage,
+                    new int[][] {{35, 70}, {60, 80}, {45, 85}});
+            case 1:
+                return new Crop(cropIndex, CROP_NAMES[cropIndex], TREE_COLOR, treeImage,
+                    new int[][] {{30, 75}, {30, 70}, {35, 80}});
+            default:
+                throw new IllegalArgumentException("Unknown crop index: " + cropIndex);
         }
     }
 

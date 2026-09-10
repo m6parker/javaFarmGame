@@ -9,6 +9,7 @@ import java.io.IOException;
 import javax.imageio.ImageIO;
 import java.util.ArrayList;
 import java.util.List;
+import src.entities.buildings.Building;
 
 public class BuildingManager {
     public static final int BUILDING_COUNT = 7;
@@ -27,7 +28,7 @@ public class BuildingManager {
             "fence"
     };
 
-    private final int[][] tileBuildings;
+    private final Building[][] tileBuildings;
     private final int[][] tileFenceSides;
     private final BufferedImage[][] buildingTiles = new BufferedImage[2][3];
     private final int[] buildingCounts = new int[BUILDING_COUNT];
@@ -40,18 +41,22 @@ public class BuildingManager {
 
     // constructor
     public BuildingManager(int rows, int cols) {
-        tileBuildings = new int[rows][cols];
+        tileBuildings = new Building[rows][cols];
         tileFenceSides = new int[rows][cols];
         initializeBuildingTiles();
     }
 
     // draw building on tile if it exists
     public void draw(Graphics2D graphics, int row, int col, int x, int y, int tileSize) {
-        int buildingIndex = tileBuildings[row][col];
-        if (buildingIndex >= 0) {
-            BufferedImage building = getBuildingImage(buildingIndex);
+        Building placedBuilding = tileBuildings[row][col];
+        if (placedBuilding != null) {
+            BufferedImage building = getBuildingImage(placedBuilding.getTypeIndex());
             if (building != null) {
-                graphics.drawImage(building, x, y, tileSize, tileSize, null);
+                int buildingSize = tileSize * placedBuilding.getSize();
+                int buildingX = x - (buildingSize - tileSize) / 2;
+                int buildingY = y - (buildingSize - tileSize) / 2;
+                graphics.drawImage(building, buildingX, buildingY,
+                        buildingSize, buildingSize, null);
             }
         }
         drawFence(graphics, row, col, x, y, tileSize, new Color(105, 68, 35));
@@ -69,12 +74,12 @@ public class BuildingManager {
     }
 
     public boolean hasBuilding(int row, int col) {
-        return tileBuildings[row][col] >= 0;
+        return tileBuildings[row][col] != null;
     }
 
     public String getBuildingAt(int row, int col) {
-        int buildingIndex = tileBuildings[row][col];
-        return buildingIndex >= 0 ? BUILDING_NAMES[buildingIndex] : null;
+        Building building = tileBuildings[row][col];
+        return building == null ? null : building.getName();
     }
 
     // place building on the tile and update count
@@ -86,28 +91,28 @@ public class BuildingManager {
         if (buildingIndex == FENCE_INDEX) {
             return placeFence(row, col, fenceSide);
         }
-        int previousBuilding = tileBuildings[row][col];
-        if (previousBuilding == buildingIndex) {
+        Building previousBuilding = tileBuildings[row][col];
+        if (previousBuilding != null && previousBuilding.getTypeIndex() == buildingIndex) {
             return false;
         }
-        if (previousBuilding >= 0) {
-            buildingCounts[previousBuilding]--;
+        if (previousBuilding != null) {
+            buildingCounts[previousBuilding.getTypeIndex()]--;
         }
-        tileBuildings[row][col] = buildingIndex;
+        tileBuildings[row][col] = new Building(buildingIndex, BUILDING_NAMES[buildingIndex]);
         buildingCounts[buildingIndex]++;
         notifyCountListeners();
         return true;
     }
 
     public boolean removeBuilding(int row, int col) {
-        int buildingIndex = tileBuildings[row][col];
-        if (buildingIndex < 0) {
+        Building building = tileBuildings[row][col];
+        if (building == null) {
             return false;
         }
         // remove building from tile
-        tileBuildings[row][col] = -1;
+        tileBuildings[row][col] = null;
         //update count
-        buildingCounts[buildingIndex]--;
+        buildingCounts[building.getTypeIndex()]--;
         notifyCountListeners();
         return true;
     }
@@ -157,6 +162,23 @@ public class BuildingManager {
             count += buildingCounts[buildingIndex];
         }
         return count;
+    }
+
+    public int getBuildingLevel(int row, int col) {
+        return tileBuildings[row][col] == null ? 0 : tileBuildings[row][col].getLevel();
+    }
+
+    public int getBuildingSize(int row, int col) {
+        return tileBuildings[row][col] == null ? 0 : tileBuildings[row][col].getSize();
+    }
+
+    public boolean upgradeBuilding(int row, int col) {
+        Building building = tileBuildings[row][col];
+        if (building == null) {
+            return false;
+        }
+        building.upgrade();
+        return true;
     }
 
     public void addCountListener(CountListener listener) {
@@ -252,7 +274,7 @@ public class BuildingManager {
         // create 2D array of building tiles
         for (int row = 0; row < tileBuildings.length; row++) {
             for (int col = 0; col < tileBuildings[row].length; col++) {
-                tileBuildings[row][col] = -1;
+                tileBuildings[row][col] = null;
             }
         }
 

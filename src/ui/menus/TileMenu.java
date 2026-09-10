@@ -114,12 +114,18 @@ public class TileMenu {
         String buildingName = buildingManager.getBuildingAt(row, col);
         String cropName = cropManager.getCropAt(row, col);
 
-        information.append("building: ").append(buildingName == null ? "none" : buildingName)
-            .append('\n');
+        information.append("building: ").append(buildingName == null ? "none" : buildingName);
+        if (buildingName != null) {
+            information.append(" (level ").append(buildingManager.getBuildingLevel(row, col))
+                .append(", size ").append(buildingManager.getBuildingSize(row, col)).append(')');
+        }
+        information.append('\n');
         information.append("crop: ").append(cropName == null ? "none" : cropName);
         if (cropName != null) {
             information.append(" (stage ").append(cropManager.getCropStage(row, col) + 1)
-                .append('/').append(CropManager.MATURE_STAGE + 1).append(')');
+                .append('/').append(CropManager.MATURE_STAGE + 1)
+                .append(", level ").append(cropManager.getCropLevel(row, col))
+                .append(", size ").append(cropManager.getCropSize(row, col)).append(')');
         }
 
         JTextArea textBox = new JTextArea(information.toString());

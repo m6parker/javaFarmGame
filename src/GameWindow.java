@@ -1,11 +1,11 @@
 package src;
 import javax.swing.*;
 
-import src.entities.Fish;
 import src.entities.LilyPad;
-import src.entities.Sheep;
-import src.entities.Chicken;
-import src.entities.Dweller;
+import src.entities.mobs.Chicken;
+import src.entities.mobs.Dweller;
+import src.entities.mobs.Fish;
+import src.entities.mobs.Sheep;
 import src.entities.Mob;
 import src.managers.BuildingManager;
 import src.managers.CropManager;

@@ -7,11 +7,11 @@ import javax.swing.BorderFactory;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
-import src.entities.Chicken;
-import src.entities.Dweller;
-import src.entities.Fish;
 import src.entities.Mob;
-import src.entities.Sheep;
+import src.entities.mobs.Chicken;
+import src.entities.mobs.Dweller;
+import src.entities.mobs.Fish;
+import src.entities.mobs.Sheep;
 
 public class MobCountPanel extends JPanel {
     private static final String[] MOB_NAMES = {"fish", "sheep", "chicken", "dweller"};
