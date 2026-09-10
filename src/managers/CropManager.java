@@ -15,7 +15,8 @@ public class CropManager {
     public static final int SPROUT_STAGE = 1;
     public static final int GROWING_STAGE = 2;
     public static final int MATURE_STAGE = 3;
-    private static final int GROWTH_TICKS_PER_STAGE = 180;
+    private static final int FASTEST_GROWTH_TICKS_PER_STAGE = 120;
+    private static final int SLOWEST_GROWTH_TICKS_PER_STAGE = 240;
     private static final String[] CROP_NAMES = {"carrot", "tree"};
     // text color in crop selection menu
     private static final Color CARROT_COLOR = new Color(235, 125, 45);
@@ -153,19 +154,61 @@ public class CropManager {
     }
 
     // update the growth stage of all crops on the grid
-    public void update() {
+    public void update(TileManager tileManager) {
         for (int row = 0; row < tileCrops.length; row++) {
             for (int col = 0; col < tileCrops[row].length; col++) {
                 if (tileCrops[row][col] < 0 || cropStages[row][col] >= MATURE_STAGE) {
                     continue;
                 }
                 growthTicks[row][col]++;
-                if (growthTicks[row][col] >= GROWTH_TICKS_PER_STAGE) {
+                int cropIndex = tileCrops[row][col];
+                int ticksPerStage = getGrowthTicksPerStage(cropIndex, tileManager, row, col);
+                if (growthTicks[row][col] >= ticksPerStage) {
                     growthTicks[row][col] = 0;
                     cropStages[row][col]++;
                 }
             }
         }
+    }
+
+    private int getGrowthTicksPerStage(int cropIndex, TileManager tileManager, int row, int col) {
+        double suitability = getAttributeSuitability(cropIndex, tileManager, row, col);
+        double growthRange = SLOWEST_GROWTH_TICKS_PER_STAGE - FASTEST_GROWTH_TICKS_PER_STAGE;
+        return (int) Math.round(SLOWEST_GROWTH_TICKS_PER_STAGE - growthRange * suitability);
+    }
+
+    private double getAttributeSuitability(int cropIndex, TileManager tileManager, int row, int col) {
+        int[][] idealRanges;
+        switch (cropIndex) {
+            case 0:
+                // carrots prefer warm / nutrientful soil and high moisture.
+                idealRanges = new int[][] {{35, 70}, {60, 80}, {45, 85}};
+                break;
+            case 1:
+                idealRanges = new int[][] {{30, 75}, {30, 70}, {35, 80}};
+                break;
+            default:
+                return 0;
+        }
+
+        int[] attributes = {
+            tileManager.getTemperature(row, col),
+            tileManager.getMoisture(row, col),
+            tileManager.getNutrients(row, col)
+        };
+        double suitabilityTotal = 0;
+        for (int attribute = 0; attribute < attributes.length; attribute++) {
+            int minimum = idealRanges[attribute][0];
+            int maximum = idealRanges[attribute][1];
+            if (attributes[attribute] < minimum) {
+                suitabilityTotal += (double) attributes[attribute] / minimum;
+            } else if (attributes[attribute] > maximum) {
+                suitabilityTotal += (double) (100 - attributes[attribute]) / (100 - maximum);
+            } else {
+                suitabilityTotal++;
+            }
+        }
+        return suitabilityTotal / attributes.length;
     }
 
     public void addCountListener(CountListener listener) {

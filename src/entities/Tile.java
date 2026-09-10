@@ -5,7 +5,7 @@ import java.awt.Color;
 public class Tile {
     private Color terrainColor;
     private final int temperature;
-    private final int moisture;
+    private int moisture;
     private final int nutrients;
 
     public Tile(Color terrainColor, int temperature, int moisture, int nutrients) {
@@ -21,6 +21,10 @@ public class Tile {
 
     public void setTerrainColor(Color terrainColor) {
         this.terrainColor = terrainColor;
+    }
+
+    public void setMoisture(int moisture) {
+        this.moisture = Math.max(0, Math.min(100, moisture));
     }
 
     public int getTemperature() {

@@ -17,6 +17,7 @@ public class TileManager {
     private static final String[] TERRAIN_NAMES = {
         "grass", "water", "lava", "sand", "soil", "stone"
     };
+    private static final int MOISTURE_DISTANCE_LIMIT = 3;
 
     private final Tile[][] tiles;
 
@@ -35,6 +36,7 @@ public class TileManager {
 
     public void setColor(int row, int col, Color color) {
         getTile(row, col).setTerrainColor(color);
+        updateMoisture();
     }
 
     public static Color getTerrainColor(int terrainIndex) {
@@ -110,6 +112,10 @@ public class TileManager {
     // create tiles with random terrain colors and properties
     private void initializeTiles() {
         Random random = new Random();
+        Color[][] terrain = new Color[getRowCount()][getColumnCount()];
+        int[][] temperatures = new int[getRowCount()][getColumnCount()];
+        int[][] nutrients = new int[getRowCount()][getColumnCount()];
+
         // randomly assign terrain colors
         for (int row = 0; row < getRowCount(); row++) {
             for (int col = 0; col < getColumnCount(); col++) {
@@ -118,11 +124,20 @@ public class TileManager {
                         : colorRoll < 17 ? SOIL_COLOR
                         : colorRoll < 19 ? WATER_COLOR
                         : STONE_COLOR;
+                terrain[row][col] = color;
+                temperatures[row][col] = random.nextInt(101);
+                nutrients[row][col] = random.nextInt(101);
+            }
+        }
+
+        // assign moisture from the distance to the nearest water tile
+        for (int row = 0; row < getRowCount(); row++) {
+            for (int col = 0; col < getColumnCount(); col++) {
                 tiles[row][col] = new Tile(
-                    color,
-                    random.nextInt(101),
-                    random.nextInt(101),
-                    random.nextInt(101));
+                    terrain[row][col],
+                    temperatures[row][col],
+                    getMoistureForDistance(row, col, terrain, random),
+                    nutrients[row][col]);
             }
         }
 
@@ -135,6 +150,47 @@ public class TileManager {
                 }
             }
         }
+    }
+
+    private int getMoistureForDistance(int row, int col, Color[][] terrain, Random random) {
+        int distanceToWater = getDistanceToWater(row, col, terrain);
+        if (distanceToWater > MOISTURE_DISTANCE_LIMIT) {
+            return random.nextInt(51);
+        }
+
+        int minimum = Math.max(51, 100 - distanceToWater * 16);
+        int maximum = Math.max(minimum, 100 - distanceToWater * 12);
+        return minimum + random.nextInt(maximum - minimum + 1);
+    }
+
+    private void updateMoisture() {
+        Color[][] terrain = new Color[getRowCount()][getColumnCount()];
+        Random random = new Random();
+        for (int row = 0; row < getRowCount(); row++) {
+            for (int col = 0; col < getColumnCount(); col++) {
+                terrain[row][col] = getColor(row, col);
+            }
+        }
+
+        for (int row = 0; row < getRowCount(); row++) {
+            for (int col = 0; col < getColumnCount(); col++) {
+                getTile(row, col).setMoisture(
+                    getMoistureForDistance(row, col, terrain, random));
+            }
+        }
+    }
+
+    private int getDistanceToWater(int row, int col, Color[][] terrain) {
+        int closestDistance = Integer.MAX_VALUE;
+        for (int waterRow = 0; waterRow < terrain.length; waterRow++) {
+            for (int waterCol = 0; waterCol < terrain[waterRow].length; waterCol++) {
+                if (terrain[waterRow][waterCol].equals(WATER_COLOR)) {
+                    int distance = Math.abs(row - waterRow) + Math.abs(col - waterCol);
+                    closestDistance = Math.min(closestDistance, distance);
+                }
+            }
+        }
+        return closestDistance;
     }
 
     // check the color of the tiles adjacent to the specified tile

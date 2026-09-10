@@ -152,6 +152,7 @@ public class BuildingManager {
 
     public int getDwellerCount() {
         int count = 0;
+        // count all buildings except fences
         for (int buildingIndex = 0; buildingIndex < FENCE_INDEX; buildingIndex++) {
             count += buildingCounts[buildingIndex];
         }
@@ -215,7 +216,7 @@ public class BuildingManager {
         Stroke previousStroke = graphics.getStroke();
         Color previousColor = graphics.getColor();
         graphics.setColor(color);
-        graphics.setStroke(new BasicStroke(Math.max(2f, tileSize / 12f)));
+        graphics.setStroke(new BasicStroke(Math.max(2f, tileSize / 8f)));
         int inset = Math.max(2, tileSize / 16);
             if (side == FENCE_TOP) {
                 graphics.drawLine(x, y, x + tileSize, y);

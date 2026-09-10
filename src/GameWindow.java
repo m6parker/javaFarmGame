@@ -65,6 +65,8 @@ public class GameWindow extends JPanel implements Runnable {
         this.addMouseMotionListener(mouseH);
         this.setFocusable(true);
         modePanel = new ModePanel(screenHeight, buildingManager, cropManager, this::setMode);
+
+        // setup world state
         plantTrees();
         spawnLilyPads();
         spawnFish(5);
@@ -178,7 +180,7 @@ public class GameWindow extends JPanel implements Runnable {
 
     public void update() {
         // update positions of mobs
-        cropManager.update();
+        cropManager.update(tileManager);
         updateDwellers();
         if (mobCountPanel != null) {
             mobCountPanel.refreshCounts();
@@ -287,6 +289,7 @@ public class GameWindow extends JPanel implements Runnable {
         repaint();
     }
 
+    // handler for clicking and hovering over tiles
     private class MouseHandler extends MouseAdapter {
         @Override
         public void mousePressed(MouseEvent e) {
@@ -375,12 +378,14 @@ public class GameWindow extends JPanel implements Runnable {
         GameWindow gamePanel = new GameWindow();
         window.setLayout(new BorderLayout());
         window.add(gamePanel, BorderLayout.CENTER);
+
         JPanel inventoryPanel = new JPanel(new GridLayout(3, 1));
         int inventoryHeight = gamePanel.screenHeight / 3;
         inventoryPanel.add(new BuildingCountPanel(gamePanel.buildingManager, inventoryHeight));
         inventoryPanel.add(new CropCountPanel(gamePanel.cropManager, inventoryHeight));
         gamePanel.mobCountPanel = new MobCountPanel(gamePanel.movingComponents, inventoryHeight);
         inventoryPanel.add(gamePanel.mobCountPanel);
+        
         window.add(gamePanel.modePanel, BorderLayout.WEST);
         window.add(inventoryPanel, BorderLayout.EAST);
         window.pack();
