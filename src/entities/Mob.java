@@ -1,5 +1,11 @@
 package src.entities;
 import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.Image;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+import javax.imageio.ImageIO;
 import java.util.Random;
 import src.managers.BuildingManager;
 import src.managers.CropManager;
@@ -28,13 +34,47 @@ public abstract class Mob {
     private int movementCounter;
     private int nextPause;
     private final Random random = new Random();
+    private final BufferedImage image;
+    private final int tileSize;
 
     // constructor
     protected Mob(int startCol, int startRow, int tileSize) {
+        this(startCol, startRow, tileSize, null);
+    }
+
+    protected Mob(int startCol, int startRow, int tileSize, String imagePath) {
+        this.tileSize = tileSize;
         double tileCenter = tileSize / TILE_CENTER_DIVISOR;
         this.x = startCol * tileSize + tileCenter;
         this.y = startRow * tileSize + tileCenter;
+        this.image = loadImage(imagePath);
         chooseRandomDirection();
+    }
+
+    protected boolean drawImage(Graphics2D graphics, int tileSize) {
+        if (image == null) {
+            return false;
+        }
+        Image scaledImage = image.getScaledInstance(tileSize, tileSize, Image.SCALE_SMOOTH);
+        graphics.drawImage(scaledImage, (int) x - tileSize / 2, (int) y - tileSize / 2, null);
+        return true;
+    }
+
+    public boolean occupiesTile(int row, int col) {
+        return (int) (y / tileSize) == row && (int) (x / tileSize) == col;
+    }
+
+    private BufferedImage loadImage(String imagePath) {
+        if (imagePath == null) {
+            return null;
+        }
+        try {
+            return ImageIO.read(new File(imagePath));
+        } catch (IOException exception) {
+            System.err.println("Could not load " + imagePath + ": "
+                    + exception.getMessage());
+            return null;
+        }
     }
 
     // update position based on velocity

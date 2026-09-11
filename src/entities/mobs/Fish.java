@@ -8,7 +8,7 @@ import src.managers.TileManager;
 public class Fish extends Mob {
     public Fish(int startCol, int startRow, int tileSize, int maxCol, int maxRow,
             TileManager tileManager) {
-        super(startCol, startRow, tileSize);
+        super(startCol, startRow, tileSize, "img/mobs/fish.png");
     }
 
     @Override
@@ -24,6 +24,9 @@ public class Fish extends Mob {
 
     @Override
     public void draw(Graphics2D graphics, int tileSize) {
+        if (drawImage(graphics, tileSize)) {
+            return;
+        }
         graphics.setColor(Color.ORANGE);
         int size = 10;
         graphics.fillOval((int) x - size / 2, (int) y - size / 2, size, size);

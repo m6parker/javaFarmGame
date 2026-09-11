@@ -11,6 +11,7 @@ import src.managers.TileManager;
 import src.entities.LilyPad;
 
 import java.util.List;
+import src.entities.Mob;
 
 import javax.swing.JTextArea;
 import javax.swing.BorderFactory;
@@ -26,14 +27,14 @@ public class TileMenu {
     private JWindow informationBox;
 
     // constructor
-    public TileMenu(JPanel parent, TileManager tileManager, BuildingManager buildingManager,
-            CropManager cropManager, List<LilyPad> lilyPads) {
+        public TileMenu(JPanel parent, TileManager tileManager, BuildingManager buildingManager,
+            CropManager cropManager, List<LilyPad> lilyPads, List<Mob> mobs) {
         this.parent = parent;
         this.tileManager = tileManager;
         this.buildingManager = buildingManager;
         this.cropManager = cropManager;
         this.lilyPads = lilyPads;
-        this.buildingMenu = new BuildingMenu(parent, tileManager, buildingManager, cropManager);
+        this.buildingMenu = new BuildingMenu(parent, tileManager, buildingManager, cropManager, mobs);
         this.cropMenu = new CropMenu(parent, tileManager, buildingManager, cropManager);
     }
 

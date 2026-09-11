@@ -59,7 +59,7 @@ public class BuildingManager {
                         buildingSize, buildingSize, null);
             }
         }
-        drawFence(graphics, row, col, x, y, tileSize, new Color(105, 68, 35));
+        drawFence(graphics, row, col, x, y, tileSize, new Color(64, 16, 45));
     }
 
     public BufferedImage getBuildingImage(int buildingIndex) {
@@ -220,7 +220,7 @@ public class BuildingManager {
 
         public void drawFencePreview(Graphics2D graphics, int row, int col, int x, int y,
             int tileSize, int side) {
-            drawFenceSide(graphics, x, y, tileSize, side, new Color(105, 68, 35, 150));
+            drawFenceSide(graphics, x, y, tileSize, side, new Color(64, 16, 45, 150));
         }
 
         private void drawFence(Graphics2D graphics, int row, int col, int x, int y,

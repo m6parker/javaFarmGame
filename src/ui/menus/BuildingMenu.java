@@ -5,7 +5,9 @@ import javax.swing.ImageIcon;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
+import java.util.List;
 
+import src.entities.Mob;
 import src.managers.BuildingManager;
 import src.managers.CropManager;
 import src.managers.TileManager;
@@ -15,13 +17,15 @@ public class BuildingMenu {
     private final TileManager tileManager;
     private final BuildingManager buildingManager;
     private final CropManager cropManager;
+        private final List<Mob> mobs;
 
     public BuildingMenu(JPanel parent, TileManager tileManager, BuildingManager buildingManager,
-            CropManager cropManager) {
+            CropManager cropManager, List<Mob> mobs) {
         this.parent = parent;
         this.tileManager = tileManager;
         this.buildingManager = buildingManager;
         this.cropManager = cropManager;
+        this.mobs = mobs;
     }
 
     // create a menu for constructing buildings
@@ -31,7 +35,7 @@ public class BuildingMenu {
             || tileManager.isLavaTile(row, col);
         buildingsMenu.setEnabled(!unavailable);
 
-        // add menu items for each building ytype
+        // add menu items for each building type
         for (int i = 0; i < BuildingManager.BUILDING_COUNT; i++) {
             Image building = buildingManager.getBuildingImage(i);
             JMenuItem buildingChoice = new JMenuItem(buildingManager.getBuildingName(i));
@@ -39,8 +43,7 @@ public class BuildingMenu {
                 Image thumbnail = building.getScaledInstance(32, 32, Image.SCALE_SMOOTH);
                 buildingChoice.setIcon(new ImageIcon(thumbnail));
             }
-                buildingChoice.setEnabled(!unavailable
-                    && (i == BuildingManager.FENCE_INDEX || !isOccupied(row, col)));
+                buildingChoice.setEnabled(canPlaceBuilding(row, col, i));
             int buildingIndex = i;
             buildingChoice.addActionListener(action -> placeBuilding(row, col, buildingIndex));
             buildingsMenu.add(buildingChoice);
@@ -66,10 +69,20 @@ public class BuildingMenu {
 
     public boolean canPlaceBuilding(int row, int col, int buildingIndex) {
         return !tileManager.isWaterTile(row, col) && !tileManager.isLavaTile(row, col)
+                && !hasMob(row, col)
                 && (buildingIndex == BuildingManager.FENCE_INDEX || !isOccupied(row, col));
     }
 
     private boolean isOccupied(int row, int col) {
         return buildingManager.hasBuilding(row, col) || cropManager.hasCrop(row, col);
+    }
+
+    private boolean hasMob(int row, int col) {
+        for (Mob mob : mobs) {
+            if (mob.occupiesTile(row, col)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

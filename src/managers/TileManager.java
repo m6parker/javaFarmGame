@@ -1,6 +1,11 @@
 package src.managers;
 
 import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+import javax.imageio.ImageIO;
 import java.util.Random;
 import src.entities.Tile;
 
@@ -20,9 +25,11 @@ public class TileManager {
     private static final int MOISTURE_DISTANCE_LIMIT = 3;
 
     private final Tile[][] tiles;
+    private final BufferedImage[] terrainImages = new BufferedImage[TERRAIN_NAMES.length];
 
     public TileManager(int rows, int cols) {
         tiles = new Tile[rows][cols];
+        loadTerrainImages();
         initializeTiles();
     }
 
@@ -107,6 +114,43 @@ public class TileManager {
 
     public int getColumnCount() {
         return tiles[0].length;
+    }
+
+    public void drawTile(Graphics2D graphics, int row, int col, int x, int y, int tileSize) {
+        BufferedImage terrainImage = getTerrainImage(row, col);
+        if (terrainImage != null) {
+            graphics.drawImage(terrainImage, x, y, tileSize, tileSize, null);
+            return;
+        }
+
+        graphics.setColor(getColor(row, col));
+        graphics.fillRect(x, y, tileSize, tileSize);
+    }
+
+    private BufferedImage getTerrainImage(int row, int col) {
+        String terrainName = getTerrainName(row, col);
+        int terrainIndex = -1;
+        for (int index = 0; index < TERRAIN_NAMES.length; index++) {
+            if (TERRAIN_NAMES[index].equals(terrainName)) {
+                terrainIndex = index;
+                break;
+            }
+        }
+        return terrainIndex < 0 ? null : terrainImages[terrainIndex];
+    }
+
+    private void loadTerrainImages() {
+        for (int index = 0; index < TERRAIN_NAMES.length; index++) {
+            String imagePath = "img/tiles/" + TERRAIN_NAMES[index] + ".png";
+            try {
+                terrainImages[index] = ImageIO.read(new File(imagePath));
+            } catch (IOException exception) {
+                if (index != 4) {
+                    System.err.println("Could not load " + imagePath + ": "
+                            + exception.getMessage());
+                }
+            }
+        }
     }
 
     // create tiles with random terrain colors and properties

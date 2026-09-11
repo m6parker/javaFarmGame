@@ -45,7 +45,8 @@ public class GameWindow extends JPanel implements Runnable {
     TileManager tileManager = new TileManager(maxScreenRow, maxScreenCol);
     BuildingManager buildingManager = new BuildingManager(maxScreenRow, maxScreenCol);
     CropManager cropManager = new CropManager(maxScreenRow, maxScreenCol);
-    TileMenu tileMenu = new TileMenu(this, tileManager, buildingManager, cropManager, lilyPads);
+        TileMenu tileMenu = new TileMenu(this, tileManager, buildingManager, cropManager,
+            lilyPads, movingComponents);
     ModePanel modePanel;
     GameMode currentMode = GameMode.SELECT;
     int selectedCol = -1;
@@ -221,8 +222,7 @@ public class GameWindow extends JPanel implements Runnable {
                 int x = col * tileSize;
                 int y = row * tileSize;
 
-                g2.setColor(tileManager.getColor(row, col));
-                g2.fillRect(x, y, tileSize, tileSize);
+                tileManager.drawTile(g2, row, col, x, y, tileSize);
             }
         }
 
@@ -248,6 +248,15 @@ public class GameWindow extends JPanel implements Runnable {
                 // draw crops and buildings
                 cropManager.draw(g2, row, col, x, y, tileSize);
                 buildingManager.draw(g2, row, col, x, y, tileSize);
+
+                if (currentMode == GameMode.CONSTRUCTION
+                    && col == hoveredCol && row == hoveredRow) {
+                    boolean canPlace = tileMenu.canPlaceBuilding(col, row,
+                        modePanel.getSelectedBuildingIndex());
+                    g2.setColor(canPlace ? new Color(50, 210, 80, 120)
+                        : new Color(220, 50, 50, 120));
+                    g2.fillRect(x, y, tileSize, tileSize);
+                }
 
                 if (currentMode == GameMode.CONSTRUCTION
                     && modePanel.getSelectedBuildingIndex() == BuildingManager.FENCE_INDEX
