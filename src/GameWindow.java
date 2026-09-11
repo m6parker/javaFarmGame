@@ -306,22 +306,41 @@ public class GameWindow extends JPanel implements Runnable {
             int mouseY = e.getY();
 
             // Convert pixel coordinates to tile grid coordinates
-            selectedCol = mouseX / tileSize;
-            selectedRow = mouseY / tileSize;
+            int clickedCol = mouseX / tileSize;
+            int clickedRow = mouseY / tileSize;
             if (currentMode == GameMode.SELECT) {
-                tileMenu.showInformation(e, selectedCol, selectedRow);
+                if (selectedCol != -1 && selectedRow != -1
+                        && (clickedCol != selectedCol || clickedRow != selectedRow)) {
+                    selectedCol = -1;
+                    selectedRow = -1;
+                    tileMenu.hideInformationBox();
+                } else if (selectedCol == -1 || selectedRow == -1) {
+                    selectedCol = clickedCol;
+                    selectedRow = clickedRow;
+                    tileMenu.showInformation(e, selectedCol, selectedRow);
+                }
             } else if (currentMode == GameMode.TERRAIN_PAINT) {
+                selectedCol = clickedCol;
+                selectedRow = clickedRow;
                 tileMenu.paintTerrain(selectedCol, selectedRow,
                         modePanel.getSelectedTerrainColor());
             } else if (currentMode == GameMode.CONSTRUCTION) {
+                selectedCol = clickedCol;
+                selectedRow = clickedRow;
                 tileMenu.placeBuilding(selectedCol, selectedRow,
                         modePanel.getSelectedBuildingIndex(), getNearestTileSide(mouseX, mouseY));
             } else if (currentMode == GameMode.CROP_PLANT) {
+                selectedCol = clickedCol;
+                selectedRow = clickedRow;
                 tileMenu.placeCrop(selectedCol, selectedRow,
                         modePanel.getSelectedCropIndex());
             } else if (currentMode == GameMode.BULLDOZE) {
+                selectedCol = clickedCol;
+                selectedRow = clickedRow;
                 tileMenu.bulldoze(selectedCol, selectedRow);
             } else if (currentMode == GameMode.HARVEST) {
+                selectedCol = clickedCol;
+                selectedRow = clickedRow;
                 tileMenu.harvest(selectedCol, selectedRow);
             }
         }
@@ -370,13 +389,13 @@ public class GameWindow extends JPanel implements Runnable {
         //     }
         // }
 
-        @Override
-        public void mouseExited(MouseEvent e) {
-            hoveredCol = -1;
-            hoveredRow = -1;
-            tileMenu.hideInformationBox();
-            repaint();
-        }
+        // @Override
+        // public void mouseExited(MouseEvent e) {
+        //     hoveredCol = -1;
+        //     hoveredRow = -1;
+        //     tileMenu.hideInformationBox();
+        //     repaint();
+        // }
     }
 
     public static void main(String[] args) {

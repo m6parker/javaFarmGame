@@ -7,12 +7,13 @@ public class Crop {
     private final int typeIndex;
     private final String name;
     private final Color color;
-    private final BufferedImage image;
+    private BufferedImage image;
     private final int[][] idealAttributeRanges;
     private int level;
     private int size;
     private int stage;
     private int growthTicks;
+    private boolean stump;
 
     public Crop(int typeIndex, String name, Color color, BufferedImage image,
             int[][] idealAttributeRanges) {
@@ -39,6 +40,10 @@ public class Crop {
 
     public BufferedImage getImage() {
         return image;
+    }
+
+    public boolean isStump() {
+        return stump;
     }
 
     public int getLevel() {
@@ -82,6 +87,11 @@ public class Crop {
     public void setMature(int matureStage) {
         stage = matureStage;
         growthTicks = 0;
+    }
+
+    public void setStump(BufferedImage stumpImage) {
+        image = stumpImage;
+        stump = true;
     }
 
     public void advanceGrowth(int ticksPerStage, int matureStage) {

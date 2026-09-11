@@ -28,6 +28,7 @@ public class CropManager {
     private final List<CountListener> countListeners = new ArrayList<>();
     private BufferedImage carrotImage;
     private BufferedImage treeImage;
+    private BufferedImage stumpImage;
 
     public interface CountListener {
         void countsChanged();
@@ -41,6 +42,7 @@ public class CropManager {
             // load image for crop from file
             carrotImage = ImageIO.read(new File("img/carrot.png"));
             treeImage = ImageIO.read(new File("img/tree.png"));
+            stumpImage = ImageIO.read(new File("img/stump.png"));
         } catch (IOException exception) {
             System.err.println("Could not load image: " + exception.getMessage());
         }
@@ -113,15 +115,21 @@ public class CropManager {
     }
 
     public boolean isMature(int row, int col) {
-        return hasCrop(row, col) && tileCrops[row][col].getStage() == MATURE_STAGE;
+        return hasCrop(row, col) && !tileCrops[row][col].isStump()
+            && tileCrops[row][col].getStage() == MATURE_STAGE;
     }
 
     public boolean harvestCrop(int row, int col) {
         if (!isMature(row, col)) {
             return false;
         }
-        int cropIndex = tileCrops[row][col].getTypeIndex();
-        removeCrop(row, col);
+        Crop crop = tileCrops[row][col];
+        int cropIndex = crop.getTypeIndex();
+        if (cropIndex == 1) {
+            crop.setStump(stumpImage);
+        } else {
+            removeCrop(row, col);
+        }
         harvestedCropCounts[cropIndex]++;
         notifyCountListeners();
         return true;
@@ -197,8 +205,8 @@ public class CropManager {
             return;
         }
 
-        // draw the crop image if it is mature
-        if (crop.getStage() == MATURE_STAGE) {
+        // draw the crop image if it is mature or is a harvested tree stump
+        if (crop.isStump() || crop.getStage() == MATURE_STAGE) {
             BufferedImage cropImage = crop.getImage();
             if (cropImage != null) {
                 int cropSize = tileSize * crop.getSize();

@@ -15,6 +15,8 @@ import src.entities.Mob;
 
 import javax.swing.JTextArea;
 import javax.swing.BorderFactory;
+import javax.swing.JButton;
+import java.awt.BorderLayout;
 
 public class TileMenu {
     private final JPanel parent;
@@ -135,10 +137,23 @@ public class TileMenu {
         textBox.setOpaque(true);
         textBox.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
 
+        JPanel informationPanel = new JPanel(new BorderLayout());
+        informationPanel.add(textBox, BorderLayout.CENTER);
+
+        JButton upgradeButton = new JButton("upgrade building");
+        upgradeButton.setEnabled(buildingName != null);
+        upgradeButton.addActionListener(action -> {
+            if (buildingManager.upgradeBuilding(row, col)) {
+                parent.repaint();
+                showInformationBox(event, row, col);
+            }
+        });
+        informationPanel.add(upgradeButton, BorderLayout.SOUTH);
+
         if (informationBox == null) {
             informationBox = new JWindow();
         }
-        informationBox.setContentPane(textBox);
+        informationBox.setContentPane(informationPanel);
         informationBox.pack();
         Point location = parent.getLocationOnScreen();
         informationBox.setLocation(location.x + event.getX() + 12,
