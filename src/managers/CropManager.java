@@ -12,10 +12,7 @@ import src.entities.crops.Crop;
 
 public class CropManager {
     public static final int CROP_COUNT = 2;
-    public static final int SEED_STAGE = 0;
-    public static final int SPROUT_STAGE = 1;
-    public static final int GROWING_STAGE = 2;
-    public static final int MATURE_STAGE = 3;
+    public static final int MATURE_STAGE = 2;
     private static final int FASTEST_GROWTH_TICKS_PER_STAGE = 120;
     private static final int SLOWEST_GROWTH_TICKS_PER_STAGE = 240;
     private static final String[] CROP_NAMES = {"carrot", "tree"};
@@ -26,7 +23,8 @@ public class CropManager {
     private final Crop[][] tileCrops;
     private final int[] harvestedCropCounts = new int[CROP_COUNT];
     private final List<CountListener> countListeners = new ArrayList<>();
-    private BufferedImage carrotImage;
+    private BufferedImage[] carrotStageImages;
+    private BufferedImage[] treeStageImages;
     private BufferedImage treeImage;
     private BufferedImage stumpImage;
 
@@ -40,9 +38,18 @@ public class CropManager {
         tileCrops = new Crop[rows][cols];
         try {
             // load image for crop from file
-            carrotImage = ImageIO.read(new File("img/carrot.png"));
-            treeImage = ImageIO.read(new File("img/tree.png"));
-            stumpImage = ImageIO.read(new File("img/stump.png"));
+            carrotStageImages = new BufferedImage[] {
+                ImageIO.read(new File("img/crops/carrot_stage_1.png")),
+                ImageIO.read(new File("img/crops/carrot_stage_2.png")),
+                ImageIO.read(new File("img/crops/carrot_stage_3.png"))
+            };
+            treeImage = ImageIO.read(new File("img/crops/tree.png"));
+            treeStageImages = new BufferedImage[] {
+                ImageIO.read(new File("img/crops/tree_stage_1.png")),
+                ImageIO.read(new File("img/crops/tree_stage_2.png")),
+                treeImage
+            };
+            stumpImage = ImageIO.read(new File("img/foliage/stump.png"));
         } catch (IOException exception) {
             System.err.println("Could not load image: " + exception.getMessage());
         }
@@ -205,26 +212,16 @@ public class CropManager {
             return;
         }
 
-        // draw the crop image if it is mature or is a harvested tree stump
-        if (crop.isStump() || crop.getStage() == MATURE_STAGE) {
-            BufferedImage cropImage = crop.getImage();
-            if (cropImage != null) {
-                int cropSize = tileSize * crop.getSize();
-                int cropX = x - (cropSize - tileSize) / 2;
-                int cropY = y - (cropSize - tileSize) / 2;
-                Image scaledCrop = cropImage.getScaledInstance(
-                        cropSize, cropSize, Image.SCALE_SMOOTH);
-                graphics.drawImage(scaledCrop, cropX, cropY, null);
-                return;
-            }
+        BufferedImage cropImage = crop.isStump() ? crop.getImage() : crop.getStageImage();
+        if (cropImage == null) {
+            return;
         }
-
-        // draw a circle for the seedling
-        int stage = crop.getStage();
-        graphics.setColor(stage == SEED_STAGE ? new Color(110, 75, 35) : new Color(45, 150, 55));
-        int baseSize = stage == SEED_STAGE ? 8 : stage == SPROUT_STAGE ? 14 : 24;
-        int size = baseSize * crop.getSize();
-        graphics.fillOval(x + (tileSize - size) / 2, y + (tileSize - size) / 2, size, size);
+        int cropSize = tileSize * crop.getSize();
+        int cropX = x - (cropSize - tileSize) / 2;
+        int cropY = y - (cropSize - tileSize) / 2;
+        Image scaledCrop = cropImage.getScaledInstance(
+            cropSize, cropSize, Image.SCALE_SMOOTH);
+        graphics.drawImage(scaledCrop, cropX, cropY, null);
     }
 
     private void notifyCountListeners() {
@@ -236,10 +233,12 @@ public class CropManager {
     private Crop createCrop(int cropIndex) {
         switch (cropIndex) {
             case 0:
-                return new Crop(cropIndex, CROP_NAMES[cropIndex], CARROT_COLOR, carrotImage,
+                return new Crop(cropIndex, CROP_NAMES[cropIndex], CARROT_COLOR,
+                    carrotStageImages[MATURE_STAGE], carrotStageImages,
                     new int[][] {{35, 70}, {60, 80}, {45, 85}});
             case 1:
                 return new Crop(cropIndex, CROP_NAMES[cropIndex], TREE_COLOR, treeImage,
+                    treeStageImages,
                     new int[][] {{30, 75}, {30, 70}, {35, 80}});
             default:
                 throw new IllegalArgumentException("Unknown crop index: " + cropIndex);

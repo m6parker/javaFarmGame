@@ -43,7 +43,7 @@ public class LilyPad {
         for (int variant = 0; variant < VARIANT_COUNT; variant++) {
             try {
                 images[variant] = ImageIO.read(
-                        new File("img/lilypad_" + (variant + 1) + ".png"));
+                        new File("img/foliage/lilypad_" + (variant + 1) + ".png"));
             } catch (IOException exception) {
                 System.err.println("Could not load lily pad image: "
                         + exception.getMessage());

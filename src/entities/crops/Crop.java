@@ -8,6 +8,7 @@ public class Crop {
     private final String name;
     private final Color color;
     private BufferedImage image;
+    private final BufferedImage[] stageImages;
     private final int[][] idealAttributeRanges;
     private int level;
     private int size;
@@ -16,11 +17,12 @@ public class Crop {
     private boolean stump;
 
     public Crop(int typeIndex, String name, Color color, BufferedImage image,
-            int[][] idealAttributeRanges) {
+            BufferedImage[] stageImages, int[][] idealAttributeRanges) {
         this.typeIndex = typeIndex;
         this.name = name;
         this.color = color;
         this.image = image;
+        this.stageImages = stageImages;
         this.idealAttributeRanges = idealAttributeRanges;
         this.level = 1;
         this.size = 1;
@@ -40,6 +42,10 @@ public class Crop {
 
     public BufferedImage getImage() {
         return image;
+    }
+
+    public BufferedImage getStageImage() {
+        return stage >= 0 && stage < stageImages.length ? stageImages[stage] : null;
     }
 
     public boolean isStump() {

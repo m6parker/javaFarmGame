@@ -12,19 +12,16 @@ import java.util.List;
 import src.entities.buildings.Building;
 
 public class BuildingManager {
-    public static final int BUILDING_COUNT = 7;
-    public static final int FENCE_INDEX = 6;
+    public static final int BUILDING_COUNT = 4;
+    public static final int FENCE_INDEX = 3;
     public static final int FENCE_TOP = 0;
     public static final int FENCE_RIGHT = 1;
     public static final int FENCE_BOTTOM = 2;
     public static final int FENCE_LEFT = 3;
     private static final String[] BUILDING_NAMES = {
             "house",
-            "workshop",
             "tower",
-            "store",
-            "fountain",
-            "chapel",
+            "barn",
             "fence"
     };
 
@@ -50,7 +47,8 @@ public class BuildingManager {
     public void draw(Graphics2D graphics, int row, int col, int x, int y, int tileSize) {
         Building placedBuilding = tileBuildings[row][col];
         if (placedBuilding != null) {
-            BufferedImage building = getBuildingImage(placedBuilding.getTypeIndex());
+            BufferedImage building = getBuildingImage(placedBuilding.getTypeIndex(),
+                    placedBuilding.getLevel());
             if (building != null) {
                 int buildingSize = tileSize * placedBuilding.getSize();
                 int buildingX = x - (buildingSize - tileSize) / 2;
@@ -63,10 +61,18 @@ public class BuildingManager {
     }
 
     public BufferedImage getBuildingImage(int buildingIndex) {
-        if (buildingIndex == FENCE_INDEX) {
+        if (buildingIndex < 0 || buildingIndex >= FENCE_INDEX) {
             return null;
         }
-        return buildingTiles[buildingIndex / 3][buildingIndex % 3];
+        return buildingTiles[1][buildingIndex];
+    }
+
+    public BufferedImage getBuildingImage(int buildingIndex, int level) {
+        if (buildingIndex < 0 || buildingIndex >= FENCE_INDEX) {
+            return null;
+        }
+        int row = level >= 2 ? 0 : 1;
+        return buildingTiles[row][buildingIndex];
     }
 
     public String getBuildingName(int buildingIndex) {
@@ -88,6 +94,9 @@ public class BuildingManager {
     }
 
     public boolean placeBuilding(int row, int col, int buildingIndex, int fenceSide) {
+        if (buildingIndex < 0 || buildingIndex >= BUILDING_COUNT) {
+            return false;
+        }
         if (buildingIndex == FENCE_INDEX) {
             return placeFence(row, col, fenceSide);
         }
@@ -157,9 +166,12 @@ public class BuildingManager {
 
     public int getDwellerCount() {
         int count = 0;
-        // count all buildings except fences
-        for (int buildingIndex = 0; buildingIndex < FENCE_INDEX; buildingIndex++) {
-            count += buildingCounts[buildingIndex];
+        for (Building[] row : tileBuildings) {
+            for (Building building : row) {
+                if (building != null && building.getTypeIndex() == 0) {
+                    count += building.getLevel();
+                }
+            }
         }
         return count;
     }
@@ -174,7 +186,7 @@ public class BuildingManager {
 
     public boolean upgradeBuilding(int row, int col) {
         Building building = tileBuildings[row][col];
-        if (building == null) {
+        if (building == null || building.getLevel() >= 2) {
             return false;
         }
         building.upgrade();
@@ -280,7 +292,10 @@ public class BuildingManager {
 
         // load images from spritesheet and split images
         try {
-            BufferedImage atlas = ImageIO.read(new File("img/buildings.png"));
+            BufferedImage atlas = ImageIO.read(new File("img/tilesets/buildings.png"));
+            if (atlas == null) {
+                throw new IOException("image could not be decoded");
+            }
             int tileWidth = atlas.getWidth() / 3;
             int tileHeight = atlas.getHeight() / 2;
 
@@ -291,7 +306,8 @@ public class BuildingManager {
                 }
             }
         } catch (IOException exception) {
-            System.err.println("Could not load img/buildings.png: " + exception.getMessage());
+            System.err.println("Could not load img/tilesets/buildings.png: "
+                    + exception.getMessage());
         }
     }
 
