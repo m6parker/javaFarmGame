@@ -22,6 +22,7 @@ import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class GameWindow extends JPanel implements Runnable {
 
@@ -39,7 +40,7 @@ public class GameWindow extends JPanel implements Runnable {
     MouseHandler mouseH = new MouseHandler();
 
     // setup entities / grid state
-    List<Mob> movingComponents = new ArrayList<>();
+    List<Mob> movingComponents = new CopyOnWriteArrayList<>();
     List<Dweller> dwellers = new ArrayList<>();
     List<LilyPad> lilyPads = new ArrayList<>();
     TileManager tileManager = new TileManager(maxScreenRow, maxScreenCol);
@@ -171,12 +172,22 @@ public class GameWindow extends JPanel implements Runnable {
         int maxAttempts = maxScreenCol * maxScreenRow;
         for (int attempt = 0; attempt < maxAttempts; attempt++) {
             int[] tile = tileManager.findRandomTile(terrainColor, random);
-            if (tile != null && !buildingManager.hasBuilding(tile[1], tile[0])
-                    && !cropManager.hasCrop(tile[1], tile[0])) {
+                if (tile != null && !buildingManager.hasBuilding(tile[1], tile[0])
+                    && !cropManager.hasCrop(tile[1], tile[0])
+                    && !hasMobAt(tile[1], tile[0])) {
                 return tile;
             }
         }
         return null;
+    }
+
+    private boolean hasMobAt(int row, int col) {
+        for (Mob mob : movingComponents) {
+            if (mob.occupiesTile(row, col)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public void update() {

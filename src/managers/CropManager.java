@@ -12,6 +12,7 @@ import src.entities.crops.Crop;
 
 public class CropManager {
     public static final int CROP_COUNT = 2;
+    public static final int WOOD_CROP_INDEX = 1;
     public static final int MATURE_STAGE = 2;
     private static final int FASTEST_GROWTH_TICKS_PER_STAGE = 120;
     private static final int SLOWEST_GROWTH_TICKS_PER_STAGE = 240;
@@ -113,6 +114,19 @@ public class CropManager {
         return harvestedCropCounts[cropIndex];
     }
 
+    public int getWoodCount() {
+        return harvestedCropCounts[WOOD_CROP_INDEX];
+    }
+
+    public boolean consumeWood(int amount) {
+        if (amount < 0 || harvestedCropCounts[WOOD_CROP_INDEX] < amount) {
+            return false;
+        }
+        harvestedCropCounts[WOOD_CROP_INDEX] -= amount;
+        notifyCountListeners();
+        return true;
+    }
+
     public BufferedImage getCropImage(int cropIndex) {
         return createCrop(cropIndex).getImage();
     }
@@ -137,7 +151,7 @@ public class CropManager {
         } else {
             removeCrop(row, col);
         }
-        harvestedCropCounts[cropIndex]++;
+        harvestedCropCounts[cropIndex] += cropIndex == WOOD_CROP_INDEX ? 2 : 1;
         notifyCountListeners();
         return true;
     }

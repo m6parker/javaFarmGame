@@ -14,6 +14,9 @@ import src.entities.buildings.Building;
 public class BuildingManager {
     public static final int BUILDING_COUNT = 4;
     public static final int FENCE_INDEX = 3;
+    public static final int BUILDING_WOOD_COST = 3;
+    public static final int FENCE_WOOD_COST = 1;
+    public static final int UPGRADE_WOOD_COST = 2;
     public static final int FENCE_TOP = 0;
     public static final int FENCE_RIGHT = 1;
     public static final int FENCE_BOTTOM = 2;
@@ -166,14 +169,20 @@ public class BuildingManager {
 
     public int getDwellerCount() {
         int count = 0;
-        for (Building[] row : tileBuildings) {
-            for (Building building : row) {
-                if (building != null && building.getTypeIndex() == 0) {
-                    count += building.getLevel();
-                }
+        for (int row = 0; row < tileBuildings.length; row++) {
+            for (int col = 0; col < tileBuildings[row].length; col++) {
+                count += getDwellerCount(row, col);
             }
         }
         return count;
+    }
+
+    public int getDwellerCount(int row, int col) {
+        Building building = tileBuildings[row][col];
+        if (building == null || building.getTypeIndex() != 0) {
+            return 0;
+        }
+        return building.getLevel() + (hasAdjacentHouse(row, col) ? 1 : 0);
     }
 
     public int getBuildingLevel(int row, int col) {
@@ -191,6 +200,16 @@ public class BuildingManager {
         }
         building.upgrade();
         return true;
+    }
+
+    private boolean hasAdjacentHouse(int row, int col) {
+        return isHouse(row - 1, col) || isHouse(row + 1, col)
+                || isHouse(row, col - 1) || isHouse(row, col + 1);
+    }
+
+    private boolean isHouse(int row, int col) {
+        return isInBounds(row, col) && tileBuildings[row][col] != null
+                && tileBuildings[row][col].getTypeIndex() == 0;
     }
 
     public void addCountListener(CountListener listener) {

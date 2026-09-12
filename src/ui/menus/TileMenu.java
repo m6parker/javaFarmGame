@@ -120,7 +120,12 @@ public class TileMenu {
         information.append("building: ").append(buildingName == null ? "none" : buildingName);
         if (buildingName != null) {
             information.append(" (level ").append(buildingManager.getBuildingLevel(row, col))
-                .append(", size ").append(buildingManager.getBuildingSize(row, col)).append(')');
+                .append(", size ").append(buildingManager.getBuildingSize(row, col));
+            if (buildingName.equals("house")) {
+                information.append(", dwellers ")
+                    .append(buildingManager.getDwellerCount(row, col));
+            }
+            information.append(')');
         }
         information.append('\n');
         information.append("crop: ").append(cropName == null ? "none" : cropName);
@@ -141,9 +146,12 @@ public class TileMenu {
         informationPanel.add(textBox, BorderLayout.CENTER);
 
         JButton upgradeButton = new JButton("upgrade building");
-        upgradeButton.setEnabled(buildingName != null);
+        upgradeButton.setEnabled(buildingName != null
+                && buildingManager.getBuildingLevel(row, col) < 2
+                && cropManager.getWoodCount() >= BuildingManager.UPGRADE_WOOD_COST);
         upgradeButton.addActionListener(action -> {
-            if (buildingManager.upgradeBuilding(row, col)) {
+            if (buildingManager.upgradeBuilding(row, col)
+                    && cropManager.consumeWood(BuildingManager.UPGRADE_WOOD_COST)) {
                 parent.repaint();
                 showInformationBox(event, row, col);
             }

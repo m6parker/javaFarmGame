@@ -59,8 +59,12 @@ public class BuildingMenu {
         if (!canPlaceBuilding(row, col, buildingIndex)) {
             return;
         }
-        buildingManager.placeBuilding(row, col, buildingIndex, fenceSide);
-        parent.repaint();
+        int woodCost = buildingIndex == BuildingManager.FENCE_INDEX
+                ? BuildingManager.FENCE_WOOD_COST : BuildingManager.BUILDING_WOOD_COST;
+        if (buildingManager.placeBuilding(row, col, buildingIndex, fenceSide)) {
+            cropManager.consumeWood(woodCost);
+            parent.repaint();
+        }
     }
 
     public boolean canPlaceBuilding(int row, int col) {
@@ -70,7 +74,9 @@ public class BuildingMenu {
     public boolean canPlaceBuilding(int row, int col, int buildingIndex) {
         return !tileManager.isWaterTile(row, col) && !tileManager.isLavaTile(row, col)
                 && !hasMob(row, col)
-                && (buildingIndex == BuildingManager.FENCE_INDEX || !isOccupied(row, col));
+                && (buildingIndex == BuildingManager.FENCE_INDEX || !isOccupied(row, col))
+                && cropManager.getWoodCount() >= (buildingIndex == BuildingManager.FENCE_INDEX
+                    ? BuildingManager.FENCE_WOOD_COST : BuildingManager.BUILDING_WOOD_COST);
     }
 
     private boolean isOccupied(int row, int col) {
