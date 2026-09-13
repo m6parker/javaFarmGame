@@ -3,12 +3,14 @@ package src.ui.panels;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.GridLayout;
+import java.awt.Image;
+import java.awt.Insets;
+import java.util.ArrayList;
+import java.util.List;
 import javax.swing.BorderFactory;
-import javax.swing.ButtonGroup;
-import javax.swing.JComboBox;
-import javax.swing.JLabel;
+import javax.swing.JButton;
 import javax.swing.JPanel;
-import javax.swing.JRadioButton;
+import javax.swing.ImageIcon;
 
 import src.managers.TileManager;
 import src.GameMode;
@@ -19,17 +21,29 @@ public class ModePanel extends JPanel {
     private static final String[] TERRAIN_NAMES = {
         "grass", "water", "lava", "sand", "soil", "stone"
     };
-    private static final String[] MODE_LABELS = {
+    private static final String[] MODE_NAMES = {
         "select", "terrain paint", "construction", "crop planting", "bulldoze", "harvest"
+    };
+    private static final String[] MODE_ICON_PATHS = {
+        "img/ui/icons/select_tool.png",
+        "img/ui/icons/terrain_tool.png",
+        "img/ui/icons/construction_tool.png",
+        "img/ui/icons/plant_tool.png",
+        "img/ui/icons/bulldoze_tool.png",
+        "img/ui/icons/harvest_tool.png"
     };
     private static final GameMode[] MODES = {
         GameMode.SELECT, GameMode.TERRAIN_PAINT, GameMode.CONSTRUCTION,
         GameMode.CROP_PLANT, GameMode.BULLDOZE, GameMode.HARVEST
     };
 
-    private final JComboBox<String> terrainSelector = new JComboBox<>(TERRAIN_NAMES);
-    private final JComboBox<String> buildingSelector;
-    private final JComboBox<String> cropSelector;
+    private final JPanel submenuPanel = new JPanel(new GridLayout(0, 2, 4, 4));
+    private final List<JButton> modeButtons = new ArrayList<>();
+    private final BuildingManager buildingManager;
+    private final CropManager cropManager;
+    private int selectedTerrainIndex;
+    private int selectedBuildingIndex;
+    private int selectedCropIndex;
     private GameMode selectedMode = GameMode.SELECT;
 
     public ModePanel(int screenHeight, BuildingManager buildingManager, CropManager cropManager,
@@ -37,59 +51,26 @@ public class ModePanel extends JPanel {
         setBorder(BorderFactory.createTitledBorder("mode"));
         setLayout(new BorderLayout(8, 8));
         setPreferredSize(new Dimension(180, screenHeight));
+        this.buildingManager = buildingManager;
+        this.cropManager = cropManager;
 
-        String[] buildingNames = new String[BuildingManager.BUILDING_COUNT];
-        for (int i = 0; i < buildingNames.length; i++) {
-            buildingNames[i] = buildingManager.getBuildingName(i);
-        }
-        buildingSelector = new JComboBox<>(buildingNames);
-
-        String[] cropNames = new String[CropManager.CROP_COUNT];
-        for (int i = 0; i < cropNames.length; i++) {
-            cropNames[i] = cropManager.getCropName(i);
-        }
-        cropSelector = new JComboBox<>(cropNames);
-
-        JPanel modeChoices = new JPanel(new GridLayout(0, 1, 4, 4));
-        ButtonGroup modeGroup = new ButtonGroup();
-        // add radio buttons for each game mode
+        JPanel modeChoices = new JPanel(new GridLayout(MODES.length, 1, 4, 4));
         for (int i = 0; i < MODES.length; i++) {
-            JRadioButton modeButton = new JRadioButton(MODE_LABELS[i]);
-            modeButton.setActionCommand(MODES[i].name());
-            modeButton.setSelected(i == 0);
+            JButton modeButton = new JButton(loadIcon(MODE_ICON_PATHS[i]));
+            int modeIndex = i;
+            modeButton.setToolTipText(MODE_NAMES[i]);
+            modeButton.setMargin(new Insets(4, 4, 4, 4));
+            modeButton.setFocusable(false);
             modeButton.addActionListener(action -> {
-                selectedMode = GameMode.valueOf(action.getActionCommand());
-                terrainSelector.setEnabled(selectedMode == GameMode.TERRAIN_PAINT);
-                buildingSelector.setEnabled(selectedMode == GameMode.CONSTRUCTION);
-                cropSelector.setEnabled(selectedMode == GameMode.CROP_PLANT);
-                listener.modeChanged(selectedMode);
+                selectMode(MODES[modeIndex], listener);
             });
-            modeGroup.add(modeButton);
+            modeButtons.add(modeButton);
             modeChoices.add(modeButton);
         }
 
-        JPanel terrainChoice = new JPanel(new BorderLayout(4, 0));
-        terrainChoice.add(new JLabel("terrain"), BorderLayout.WEST);
-        terrainChoice.add(terrainSelector, BorderLayout.CENTER);
-        terrainSelector.setEnabled(false);
-
-        JPanel buildingChoice = new JPanel(new BorderLayout(4, 0));
-        buildingChoice.add(new JLabel("building"), BorderLayout.WEST);
-        buildingChoice.add(buildingSelector, BorderLayout.CENTER);
-        buildingSelector.setEnabled(false);
-
-        JPanel cropChoice = new JPanel(new BorderLayout(4, 0));
-        cropChoice.add(new JLabel("crop"), BorderLayout.WEST);
-        cropChoice.add(cropSelector, BorderLayout.CENTER);
-        cropSelector.setEnabled(false);
-
-        JPanel toolChoices = new JPanel(new GridLayout(0, 1, 4, 4));
-        toolChoices.add(terrainChoice);
-        toolChoices.add(buildingChoice);
-        toolChoices.add(cropChoice);
-
-        add(modeChoices, BorderLayout.NORTH);
-        add(toolChoices, BorderLayout.SOUTH);
+        add(modeChoices, BorderLayout.WEST);
+        add(submenuPanel, BorderLayout.CENTER);
+        selectMode(GameMode.SELECT, listener);
     }
 
     public GameMode getSelectedMode() {
@@ -97,15 +78,104 @@ public class ModePanel extends JPanel {
     }
 
     public java.awt.Color getSelectedTerrainColor() {
-        return TileManager.getTerrainColor(terrainSelector.getSelectedIndex());
+        return TileManager.getTerrainColor(selectedTerrainIndex);
     }
 
     public int getSelectedBuildingIndex() {
-        return buildingSelector.getSelectedIndex();
+        return selectedBuildingIndex;
     }
 
     public int getSelectedCropIndex() {
-        return cropSelector.getSelectedIndex();
+        return selectedCropIndex;
+    }
+
+    public void setToolsEnabled(boolean enabled) {
+        for (int i = 0; i < modeButtons.size(); i++) {
+            modeButtons.get(i).setEnabled(enabled || i == 0);
+        }
+        submenuPanel.setEnabled(enabled);
+        for (java.awt.Component component : submenuPanel.getComponents()) {
+            component.setEnabled(enabled);
+        }
+    }
+
+    private void selectMode(GameMode mode, ModeChangeListener listener) {
+        selectedMode = mode;
+        submenuPanel.removeAll();
+        if (mode == GameMode.TERRAIN_PAINT) {
+            addTerrainOptions();
+        } else if (mode == GameMode.CONSTRUCTION) {
+            addBuildingOptions();
+        } else if (mode == GameMode.CROP_PLANT) {
+            addCropOptions();
+        }
+        submenuPanel.setVisible(mode == GameMode.TERRAIN_PAINT
+                || mode == GameMode.CONSTRUCTION || mode == GameMode.CROP_PLANT);
+        submenuPanel.revalidate();
+        submenuPanel.repaint();
+        listener.modeChanged(mode);
+    }
+
+    private void addTerrainOptions() {
+        for (int i = 0; i < TERRAIN_NAMES.length; i++) {
+            int optionIndex = i;
+            JButton option = createOptionButton("img/tiles/" + TERRAIN_NAMES[i] + ".png",
+                    TERRAIN_NAMES[i]);
+            option.addActionListener(action -> selectedTerrainIndex = optionIndex);
+            submenuPanel.add(option);
+        }
+    }
+
+    private void addBuildingOptions() {
+        for (int i = 0; i < BuildingManager.BUILDING_COUNT; i++) {
+            int optionIndex = i;
+            JButton option = createOptionButton(buildingManager.getBuildingImage(i),
+                    buildingManager.getBuildingName(i));
+            option.addActionListener(action -> selectedBuildingIndex = optionIndex);
+            submenuPanel.add(option);
+        }
+    }
+
+    private void addCropOptions() {
+        for (int i = 0; i < CropManager.CROP_COUNT; i++) {
+            int optionIndex = i;
+            JButton option = createOptionButton(cropManager.getCropImage(i),
+                    cropManager.getCropName(i));
+            option.addActionListener(action -> selectedCropIndex = optionIndex);
+            submenuPanel.add(option);
+        }
+    }
+
+    private JButton createOptionButton(String path, String name) {
+        return createOptionButton(new ImageIcon(path), name);
+    }
+
+    private JButton createOptionButton(java.awt.image.BufferedImage image, String name) {
+        if (image == null) {
+            JButton button = new JButton();
+            button.setToolTipText(name);
+            button.setMargin(new Insets(3, 3, 3, 3));
+            button.setFocusable(false);
+            return button;
+        }
+        return createOptionButton(new ImageIcon(image), name);
+    }
+
+    private JButton createOptionButton(ImageIcon icon, String name) {
+        JButton button = new JButton(scaleIcon(icon));
+        button.setToolTipText(name);
+        button.setMargin(new Insets(3, 3, 3, 3));
+        button.setFocusable(false);
+        return button;
+    }
+
+    private ImageIcon scaleIcon(ImageIcon icon) {
+        Image image = icon.getImage().getScaledInstance(32, 32, Image.SCALE_SMOOTH);
+        return new ImageIcon(image);
+    }
+
+    private ImageIcon loadIcon(String path) {
+        return scaleIcon(new ImageIcon(path));
     }
 
     public interface ModeChangeListener {

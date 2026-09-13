@@ -13,6 +13,7 @@ import src.managers.TileManager;
 import src.ui.menus.TileMenu;
 import src.ui.panels.BuildingCountPanel;
 import src.ui.panels.CropCountPanel;
+import src.ui.panels.DayPanel;
 import src.ui.panels.ModePanel;
 import src.ui.panels.MobCountPanel;
 
@@ -34,6 +35,7 @@ public class GameWindow extends JPanel implements Runnable {
     final int maxScreenRow = 12;
     final int screenWidth = tileSize * maxScreenCol; // 768 pixels
     final int screenHeight = tileSize * maxScreenRow; // 576 pixels
+    private static final long DAY_LENGTH_NANOS = 300_000_000_000L;
 
     int FPS = 60;
     Thread gameThread;
@@ -56,6 +58,10 @@ public class GameWindow extends JPanel implements Runnable {
     int hoveredRow = -1;
     int hoveredFenceSide = BuildingManager.FENCE_BOTTOM;
     MobCountPanel mobCountPanel;
+    DayPanel dayPanel;
+    private boolean paused;
+    private int day = 1;
+    private long dayElapsedNanos;
 
     // constructor
     public GameWindow() {
@@ -112,19 +118,44 @@ public class GameWindow extends JPanel implements Runnable {
         double delta = 0;
         long lastTime = System.nanoTime();
         long currentTime;
+        long pendingGameNanos = 0;
 
         while (gameThread != null) {
             // calculate time since last frame
             // update game state and repaint if enough time has passed
             currentTime = System.nanoTime();
-            delta += (currentTime - lastTime) / drawInterval;
+            long elapsedNanos = currentTime - lastTime;
+            delta += elapsedNanos / drawInterval;
             lastTime = currentTime;
 
+            if (!paused) {
+                pendingGameNanos += elapsedNanos;
+            } else {
+                pendingGameNanos = 0;
+            }
+
             if (delta >= 1) {
-                update();
+                if (!paused) {
+                    updateDayPanel(pendingGameNanos);
+                    pendingGameNanos = 0;
+                    update();
+                }
                 repaint();
                 delta--;
             }
+        }
+    }
+
+    private void updateDayPanel(long elapsedNanos) {
+        dayElapsedNanos += elapsedNanos;
+        while (dayElapsedNanos >= DAY_LENGTH_NANOS) {
+            dayElapsedNanos -= DAY_LENGTH_NANOS;
+            day++;
+        }
+        if (dayPanel != null) {
+            long remainingNanos = DAY_LENGTH_NANOS - dayElapsedNanos;
+            long remainingSeconds = (remainingNanos + 999_999_999L) / 1_000_000_000L;
+            dayPanel.updateTime(day, remainingSeconds);
         }
     }
 
@@ -219,6 +250,15 @@ public class GameWindow extends JPanel implements Runnable {
         while (dwellers.size() > targetCount) {
             Dweller dweller = dwellers.remove(dwellers.size() - 1);
             movingComponents.remove(dweller);
+        }
+    }
+
+    private void togglePaused() {
+        paused = !paused;
+        dayPanel.setPaused(paused);
+        modePanel.setToolsEnabled(!paused);
+        if (paused && currentMode != GameMode.SELECT) {
+            setMode(GameMode.SELECT);
         }
     }
 
@@ -418,8 +458,11 @@ public class GameWindow extends JPanel implements Runnable {
         window.setLayout(new BorderLayout());
         window.add(gamePanel, BorderLayout.CENTER);
 
-        JPanel inventoryPanel = new JPanel(new GridLayout(3, 1));
+        JPanel inventoryPanel = new JPanel(new GridLayout(4, 1));
         int inventoryHeight = gamePanel.screenHeight / 3;
+        gamePanel.dayPanel = new DayPanel(gamePanel::togglePaused, 180);
+        gamePanel.dayPanel.updateTime(gamePanel.day, 300);
+        inventoryPanel.add(gamePanel.dayPanel);
         inventoryPanel.add(new BuildingCountPanel(gamePanel.buildingManager, inventoryHeight));
         inventoryPanel.add(new CropCountPanel(gamePanel.cropManager, inventoryHeight));
         gamePanel.mobCountPanel = new MobCountPanel(gamePanel.movingComponents, inventoryHeight);
