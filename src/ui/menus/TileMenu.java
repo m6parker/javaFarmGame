@@ -119,8 +119,7 @@ public class TileMenu {
 
         information.append("building: ").append(buildingName == null ? "none" : buildingName);
         if (buildingName != null) {
-            information.append(" (level ").append(buildingManager.getBuildingLevel(row, col))
-                .append(", size ").append(buildingManager.getBuildingSize(row, col));
+            information.append(" (level ").append(buildingManager.getBuildingLevel(row, col));
             if (buildingName.equals("house")) {
                 information.append(", dwellers ")
                     .append(buildingManager.getDwellerCount(row, col));

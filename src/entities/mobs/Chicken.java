@@ -25,10 +25,5 @@ public class Chicken extends Mob {
         if (drawImage(graphics, tileSize)) {
             return;
         }
-        graphics.setColor(new Color(0x663300));
-        int size = 10;
-        graphics.fillOval((int) x - size / 2, (int) y - size / 2, size, size);
-        graphics.setColor(Color.DARK_GRAY);
-        graphics.drawOval((int) x - size / 2, (int) y - size / 2, size, size);
     }
 }

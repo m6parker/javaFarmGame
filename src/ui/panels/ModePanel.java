@@ -11,9 +11,8 @@ import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.ImageIcon;
-
 import src.managers.TileManager;
-import src.GameMode;
+import src.Enums.GameModes;
 import src.managers.BuildingManager;
 import src.managers.CropManager;
 
@@ -32,9 +31,9 @@ public class ModePanel extends JPanel {
         "img/ui/icons/bulldoze_tool.png",
         "img/ui/icons/harvest_tool.png"
     };
-    private static final GameMode[] MODES = {
-        GameMode.SELECT, GameMode.TERRAIN_PAINT, GameMode.CONSTRUCTION,
-        GameMode.CROP_PLANT, GameMode.BULLDOZE, GameMode.HARVEST
+    private static final GameModes[] MODES = {
+        GameModes.SELECT, GameModes.TERRAIN_PAINT, GameModes.CONSTRUCTION,
+        GameModes.CROP_PLANT, GameModes.BULLDOZE, GameModes.HARVEST
     };
 
     private final JPanel submenuPanel = new JPanel(new GridLayout(0, 2, 4, 4));
@@ -44,7 +43,7 @@ public class ModePanel extends JPanel {
     private int selectedTerrainIndex;
     private int selectedBuildingIndex;
     private int selectedCropIndex;
-    private GameMode selectedMode = GameMode.SELECT;
+    private GameModes selectedMode = GameModes.SELECT;
 
     public ModePanel(int screenHeight, BuildingManager buildingManager, CropManager cropManager,
         ModeChangeListener listener) {
@@ -70,11 +69,7 @@ public class ModePanel extends JPanel {
 
         add(modeChoices, BorderLayout.WEST);
         add(submenuPanel, BorderLayout.CENTER);
-        selectMode(GameMode.SELECT, listener);
-    }
-
-    public GameMode getSelectedMode() {
-        return selectedMode;
+        selectMode(GameModes.SELECT, listener);
     }
 
     public java.awt.Color getSelectedTerrainColor() {
@@ -99,18 +94,18 @@ public class ModePanel extends JPanel {
         }
     }
 
-    private void selectMode(GameMode mode, ModeChangeListener listener) {
+    private void selectMode(GameModes mode, ModeChangeListener listener) {
         selectedMode = mode;
         submenuPanel.removeAll();
-        if (mode == GameMode.TERRAIN_PAINT) {
+        if (mode == GameModes.TERRAIN_PAINT) {
             addTerrainOptions();
-        } else if (mode == GameMode.CONSTRUCTION) {
+        } else if (mode == GameModes.CONSTRUCTION) {
             addBuildingOptions();
-        } else if (mode == GameMode.CROP_PLANT) {
+        } else if (mode == GameModes.CROP_PLANT) {
             addCropOptions();
         }
-        submenuPanel.setVisible(mode == GameMode.TERRAIN_PAINT
-                || mode == GameMode.CONSTRUCTION || mode == GameMode.CROP_PLANT);
+        submenuPanel.setVisible(mode == GameModes.TERRAIN_PAINT
+            || mode == GameModes.CONSTRUCTION || mode == GameModes.CROP_PLANT);
         submenuPanel.revalidate();
         submenuPanel.repaint();
         listener.modeChanged(mode);
@@ -179,6 +174,6 @@ public class ModePanel extends JPanel {
     }
 
     public interface ModeChangeListener {
-        void modeChanged(GameMode mode);
+        void modeChanged(GameModes mode);
     }
 }

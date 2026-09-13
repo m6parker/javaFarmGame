@@ -29,7 +29,6 @@ public class CropMenu {
 
         for (int i = 0; i < CropManager.CROP_COUNT; i++) {
             JMenuItem cropChoice = new JMenuItem(cropManager.getCropName(i));
-            cropChoice.setForeground(cropManager.getCropColor(i));
             cropChoice.setEnabled(!occupied && cropManager.canPlantOn(i, tileManager, row, col));
             int cropIndex = i;
             cropChoice.addActionListener(action -> plantCrop(row, col, cropIndex));

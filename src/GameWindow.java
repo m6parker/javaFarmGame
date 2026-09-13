@@ -10,7 +10,11 @@ import src.entities.Mob;
 import src.managers.BuildingManager;
 import src.managers.CropManager;
 import src.managers.TileManager;
+import src.managers.WorldManager;
+import src.Enums.Colors;
+import src.ui.MainMenuPanel;
 import src.ui.menus.TileMenu;
+import src.Enums.GameModes;
 import src.ui.panels.BuildingCountPanel;
 import src.ui.panels.CropCountPanel;
 import src.ui.panels.DayPanel;
@@ -45,13 +49,13 @@ public class GameWindow extends JPanel implements Runnable {
     List<Mob> movingComponents = new CopyOnWriteArrayList<>();
     List<Dweller> dwellers = new ArrayList<>();
     List<LilyPad> lilyPads = new ArrayList<>();
-    TileManager tileManager = new TileManager(maxScreenRow, maxScreenCol);
-    BuildingManager buildingManager = new BuildingManager(maxScreenRow, maxScreenCol);
-    CropManager cropManager = new CropManager(maxScreenRow, maxScreenCol);
-        TileMenu tileMenu = new TileMenu(this, tileManager, buildingManager, cropManager,
-            lilyPads, movingComponents);
+    TileManager tileManager;
+    BuildingManager buildingManager;
+    CropManager cropManager;
+    TileMenu tileMenu;
+    private final WorldManager worldConfig;
     ModePanel modePanel;
-    GameMode currentMode = GameMode.SELECT;
+    GameModes currentMode = GameModes.SELECT;
     int selectedCol = -1;
     int selectedRow = -1;
     int hoveredCol = -1;
@@ -65,6 +69,16 @@ public class GameWindow extends JPanel implements Runnable {
 
     // constructor
     public GameWindow() {
+        this(WorldManager.load());
+    }
+
+    public GameWindow(WorldManager worldConfig) {
+        this.worldConfig = worldConfig;
+        tileManager = new TileManager(maxScreenRow, maxScreenCol, worldConfig);
+        buildingManager = new BuildingManager(maxScreenRow, maxScreenCol);
+        cropManager = new CropManager(maxScreenRow, maxScreenCol);
+        tileMenu = new TileMenu(this, tileManager, buildingManager, cropManager,
+            lilyPads, movingComponents);
         // setup window size / background color
         this.setPreferredSize(new Dimension(screenWidth, screenHeight));
         this.setBackground(Color.black);
@@ -77,16 +91,17 @@ public class GameWindow extends JPanel implements Runnable {
         // setup world state
         plantTrees();
         spawnLilyPads();
-        spawnFish(5);
-        spawnSheep(5);
-        spawnChicken(5);
+        spawnFish(worldConfig.spawnCount("fish"));
+        spawnSheep(worldConfig.spawnCount("sheep"));
+        spawnChicken(worldConfig.spawnCount("chicken"));
     }
 
     private void plantTrees() {
         Random random = new Random();
         for (int row = 0; row < maxScreenRow; row++) {
             for (int col = 0; col < maxScreenCol; col++) {
-                if (tileManager.isGrassTile(row, col) && random.nextBoolean()) {
+                if (tileManager.isGrassTile(row, col)
+                    && random.nextDouble() < worldConfig.tileProbability("tree")) {
                     cropManager.plantMatureCrop(row, col, 1);
                 }
             }
@@ -99,7 +114,8 @@ public class GameWindow extends JPanel implements Runnable {
             for (int col = 0; col < maxScreenCol; col++) {
                 boolean available = !cropManager.hasCrop(row, col)
                         && !buildingManager.hasBuilding(row, col);
-                if (available && tileManager.isWaterTile(row, col) && random.nextBoolean()) {
+                if (available && tileManager.isWaterTile(row, col)
+                    && random.nextDouble() < worldConfig.tileProbability("lilyPad")) {
                     lilyPads.add(new LilyPad(row, col, random.nextInt(2)));
                 }
             }
@@ -198,7 +214,6 @@ public class GameWindow extends JPanel implements Runnable {
         }
     }
 
-
     private int[] findRandomAvailableTile(Color terrainColor, Random random) {
         int maxAttempts = maxScreenCol * maxScreenRow;
         for (int attempt = 0; attempt < maxAttempts; attempt++) {
@@ -257,8 +272,8 @@ public class GameWindow extends JPanel implements Runnable {
         paused = !paused;
         dayPanel.setPaused(paused);
         modePanel.setToolsEnabled(!paused);
-        if (paused && currentMode != GameMode.SELECT) {
-            setMode(GameMode.SELECT);
+        if (paused && currentMode != GameModes.SELECT) {
+            setMode(GameModes.SELECT);
         }
     }
 
@@ -300,16 +315,16 @@ public class GameWindow extends JPanel implements Runnable {
                 cropManager.draw(g2, row, col, x, y, tileSize);
                 buildingManager.draw(g2, row, col, x, y, tileSize);
 
-                if (currentMode == GameMode.CONSTRUCTION
+                if (currentMode == GameModes.CONSTRUCTION
                     && col == hoveredCol && row == hoveredRow) {
                     boolean canPlace = tileMenu.canPlaceBuilding(col, row,
                         modePanel.getSelectedBuildingIndex());
-                    g2.setColor(canPlace ? new Color(50, 210, 80, 120)
-                        : new Color(220, 50, 50, 120));
+                    g2.setColor(canPlace ? Colors.VALID_PREVIEW.lowOpacity(120)
+                        : Colors.INVALID_PREVIEW.lowOpacity(120));
                     g2.fillRect(x, y, tileSize, tileSize);
                 }
 
-                if (currentMode == GameMode.CONSTRUCTION
+                if (currentMode == GameModes.CONSTRUCTION
                     && modePanel.getSelectedBuildingIndex() == BuildingManager.FENCE_INDEX
                     && col == hoveredCol && row == hoveredRow
                         && tileMenu.canPlaceBuilding(col, row,
@@ -341,7 +356,7 @@ public class GameWindow extends JPanel implements Runnable {
     }
 
     // clicking tiles
-    public void setMode(GameMode mode) {
+    public void setMode(GameModes mode) {
         currentMode = mode;
         hoveredCol = -1;
         hoveredRow = -1;
@@ -359,7 +374,7 @@ public class GameWindow extends JPanel implements Runnable {
             // Convert pixel coordinates to tile grid coordinates
             int clickedCol = mouseX / tileSize;
             int clickedRow = mouseY / tileSize;
-            if (currentMode == GameMode.SELECT) {
+            if (currentMode == GameModes.SELECT) {
                 if (selectedCol != -1 && selectedRow != -1
                         && (clickedCol != selectedCol || clickedRow != selectedRow)) {
                     selectedCol = -1;
@@ -370,26 +385,26 @@ public class GameWindow extends JPanel implements Runnable {
                     selectedRow = clickedRow;
                     tileMenu.showInformation(e, selectedCol, selectedRow);
                 }
-            } else if (currentMode == GameMode.TERRAIN_PAINT) {
+            } else if (currentMode == GameModes.TERRAIN_PAINT) {
                 selectedCol = clickedCol;
                 selectedRow = clickedRow;
                 tileMenu.paintTerrain(selectedCol, selectedRow,
                         modePanel.getSelectedTerrainColor());
-            } else if (currentMode == GameMode.CONSTRUCTION) {
+            } else if (currentMode == GameModes.CONSTRUCTION) {
                 selectedCol = clickedCol;
                 selectedRow = clickedRow;
                 tileMenu.placeBuilding(selectedCol, selectedRow,
                         modePanel.getSelectedBuildingIndex(), getNearestTileSide(mouseX, mouseY));
-            } else if (currentMode == GameMode.CROP_PLANT) {
+            } else if (currentMode == GameModes.CROP_PLANT) {
                 selectedCol = clickedCol;
                 selectedRow = clickedRow;
                 tileMenu.placeCrop(selectedCol, selectedRow,
                         modePanel.getSelectedCropIndex());
-            } else if (currentMode == GameMode.BULLDOZE) {
+            } else if (currentMode == GameModes.BULLDOZE) {
                 selectedCol = clickedCol;
                 selectedRow = clickedRow;
                 tileMenu.bulldoze(selectedCol, selectedRow);
-            } else if (currentMode == GameMode.HARVEST) {
+            } else if (currentMode == GameModes.HARVEST) {
                 selectedCol = clickedCol;
                 selectedRow = clickedRow;
                 tileMenu.harvest(selectedCol, selectedRow);
@@ -398,7 +413,7 @@ public class GameWindow extends JPanel implements Runnable {
 
         @Override
         public void mouseMoved(MouseEvent e) {
-            if (currentMode == GameMode.CONSTRUCTION) {
+            if (currentMode == GameModes.CONSTRUCTION) {
                 hoveredCol = e.getX() / tileSize;
                 hoveredRow = e.getY() / tileSize;
                 hoveredFenceSide = getNearestTileSide(e.getX(), e.getY());
@@ -430,23 +445,6 @@ public class GameWindow extends JPanel implements Runnable {
             }
             return BuildingManager.FENCE_LEFT;
         }
-
-        // @Override
-        // public void mouseMoved(MouseEvent e) {
-        //     int hoveredCol = e.getX() / tileSize;
-        //     int hoveredRow = e.getY() / tileSize;
-        //     if (currentMode == GameMode.SELECT) {
-        //         tileMenu.showInformation(e, hoveredCol, hoveredRow);
-        //     }
-        // }
-
-        // @Override
-        // public void mouseExited(MouseEvent e) {
-        //     hoveredCol = -1;
-        //     hoveredRow = -1;
-        //     tileMenu.hideInformationBox();
-        //     repaint();
-        // }
     }
 
     public static void main(String[] args) {
@@ -454,7 +452,19 @@ public class GameWindow extends JPanel implements Runnable {
         window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         window.setResizable(false);
 
-        GameWindow gamePanel = new GameWindow();
+        WorldManager worldConfig = WorldManager.load();
+        MainMenuPanel menu = new MainMenuPanel(() -> startNewGame(window, worldConfig), worldConfig);
+        window.add(menu);
+        window.setSize(420, 320);
+
+        window.setLocationRelativeTo(null);
+        window.setVisible(true);
+
+    }
+
+    private static void startNewGame(JFrame window, WorldManager worldConfig) {
+        GameWindow gamePanel = new GameWindow(worldConfig);
+        window.getContentPane().removeAll();
         window.setLayout(new BorderLayout());
         window.add(gamePanel, BorderLayout.CENTER);
 
@@ -467,14 +477,11 @@ public class GameWindow extends JPanel implements Runnable {
         inventoryPanel.add(new CropCountPanel(gamePanel.cropManager, inventoryHeight));
         gamePanel.mobCountPanel = new MobCountPanel(gamePanel.movingComponents, inventoryHeight);
         inventoryPanel.add(gamePanel.mobCountPanel);
-        
         window.add(gamePanel.modePanel, BorderLayout.WEST);
         window.add(inventoryPanel, BorderLayout.EAST);
         window.pack();
-
-        window.setLocationRelativeTo(null);
-        window.setVisible(true);
-
+        window.revalidate();
+        window.repaint();
         gamePanel.startGameThread();
     }
 }

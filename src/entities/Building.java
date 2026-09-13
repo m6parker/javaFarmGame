@@ -1,4 +1,4 @@
-package src.entities.buildings;
+package src.entities;
 
 public class Building {
     private final int typeIndex;
@@ -21,10 +21,6 @@ public class Building {
 
     public int getLevel() {
         return level;
-    }
-
-    public int getSize() {
-        return 1;
     }
 
     public void upgradeLevel() {

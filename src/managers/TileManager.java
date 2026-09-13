@@ -8,27 +8,28 @@ import java.io.IOException;
 import javax.imageio.ImageIO;
 import java.util.Random;
 import src.entities.Tile;
+import src.Enums.TerrainType;
 
 public class TileManager {
-    public static final Color GRASS_COLOR = new Color(76, 175, 80);
-    public static final Color WATER_COLOR = new Color(66, 135, 245);
-    public static final Color LAVA_COLOR = new Color(220, 70, 70);
-    public static final Color SOIL_COLOR = new Color(145, 95, 55);
-    public static final Color SAND_COLOR = new Color(245, 205, 60);
-    public static final Color STONE_COLOR = new Color(150, 150, 150);
+    public static final Color GRASS_COLOR = TerrainType.GRASS.color();
+    public static final Color WATER_COLOR = TerrainType.WATER.color();
+    public static final Color LAVA_COLOR = TerrainType.LAVA.color();
+    public static final Color SOIL_COLOR = TerrainType.SOIL.color();
+    public static final Color SAND_COLOR = TerrainType.SAND.color();
+    public static final Color STONE_COLOR = TerrainType.STONE.color();
     private static final Color[] TERRAIN_COLORS = {
         GRASS_COLOR, WATER_COLOR, LAVA_COLOR, SAND_COLOR, SOIL_COLOR, STONE_COLOR
     };
     private static final String[] TERRAIN_NAMES = {
         "grass", "water", "lava", "sand", "soil", "stone"
     };
-    private static final int MOISTURE_DISTANCE_LIMIT = 3;
-
     private final Tile[][] tiles;
     private final BufferedImage[] terrainImages = new BufferedImage[TERRAIN_NAMES.length];
+    private final WorldManager worldConfig;
 
-    public TileManager(int rows, int cols) {
+    public TileManager(int rows, int cols, WorldManager worldConfig) {
         tiles = new Tile[rows][cols];
+        this.worldConfig = worldConfig;
         loadTerrainImages();
         initializeTiles();
     }
@@ -163,14 +164,17 @@ public class TileManager {
         // randomly assign terrain colors
         for (int row = 0; row < getRowCount(); row++) {
             for (int col = 0; col < getColumnCount(); col++) {
-                int colorRoll = random.nextInt(20);
-                Color color = colorRoll < 12 ? GRASS_COLOR
-                        : colorRoll < 17 ? SOIL_COLOR
-                        : colorRoll < 19 ? WATER_COLOR
-                        : STONE_COLOR;
+                double colorRoll = random.nextDouble();
+                double grassLimit = worldConfig.tileProbability("grass");
+                double soilLimit = grassLimit + worldConfig.tileProbability("soil");
+                double waterLimit = soilLimit + worldConfig.tileProbability("water");
+                Color color = colorRoll < grassLimit ? GRASS_COLOR
+                    : colorRoll < soilLimit ? SOIL_COLOR
+                    : colorRoll < waterLimit ? WATER_COLOR
+                    : STONE_COLOR;
                 terrain[row][col] = color;
-                temperatures[row][col] = random.nextInt(101);
-                nutrients[row][col] = random.nextInt(101);
+                temperatures[row][col] = random.nextInt(worldConfig.temperatureMaximum() + 1);
+                nutrients[row][col] = random.nextInt(worldConfig.nutrientsMaximum() + 1);
             }
         }
 
@@ -189,7 +193,7 @@ public class TileManager {
         for (int row = 0; row < getRowCount(); row++) {
             for (int col = 0; col < getColumnCount(); col++) {
                 if (!isWaterTile(row, col) && isNextToColor(row, col, WATER_COLOR)
-                        && random.nextInt(4) == 0) {
+                        && random.nextDouble() < worldConfig.sandAdjacentWaterProbability()) {
                     setColor(row, col, SAND_COLOR);
                 }
             }
@@ -198,8 +202,8 @@ public class TileManager {
 
     private int getMoistureForDistance(int row, int col, Color[][] terrain, Random random) {
         int distanceToWater = getDistanceToWater(row, col, terrain);
-        if (distanceToWater > MOISTURE_DISTANCE_LIMIT) {
-            return random.nextInt(51);
+        if (distanceToWater > worldConfig.moistureDistanceLimit()) {
+            return random.nextInt(worldConfig.outOfRangeMoistureMaximum() + 1);
         }
 
         int minimum = Math.max(51, 100 - distanceToWater * 16);

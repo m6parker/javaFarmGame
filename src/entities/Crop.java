@@ -1,12 +1,9 @@
-package src.entities.crops;
-
-import java.awt.Color;
+package src.entities;
 import java.awt.image.BufferedImage;
 
 public class Crop {
     private final int typeIndex;
     private final String name;
-    private final Color color;
     private BufferedImage image;
     private final BufferedImage[] stageImages;
     private final int[][] idealAttributeRanges;
@@ -16,11 +13,9 @@ public class Crop {
     private int growthTicks;
     private boolean stump;
 
-    public Crop(int typeIndex, String name, Color color, BufferedImage image,
-            BufferedImage[] stageImages, int[][] idealAttributeRanges) {
+    public Crop(int typeIndex, String name, BufferedImage image, BufferedImage[] stageImages, int[][] idealAttributeRanges) {
         this.typeIndex = typeIndex;
         this.name = name;
-        this.color = color;
         this.image = image;
         this.stageImages = stageImages;
         this.idealAttributeRanges = idealAttributeRanges;
@@ -34,10 +29,6 @@ public class Crop {
 
     public String getName() {
         return name;
-    }
-
-    public Color getColor() {
-        return color;
     }
 
     public BufferedImage getImage() {

@@ -1,0 +1,20 @@
+{
+  "tileProbabilities": {
+    "grass": 0.60,
+    "soil": 0.25,
+    "water": 0.10,
+    "stone": 0.05,
+    "sandAdjacentWater": 0.25,
+    "tree": 0.50,
+    "lilyPad": 0.50
+  },
+  "spawnCounts": {
+    "fish": 5,
+    "sheep": 5,
+    "chicken": 5
+  },
+  "moistureDistanceLimit": 3,
+  "temperatureMaximum": 100,
+  "nutrientsMaximum": 100,
+  "outOfRangeMoistureMaximum": 50
+}

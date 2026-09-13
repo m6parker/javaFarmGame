@@ -4,6 +4,7 @@ import java.awt.Graphics2D;
 
 import src.entities.Mob;
 import src.managers.TileManager;
+import src.Enums.TerrainType;
 
 public class Fish extends Mob {
     public Fish(int startCol, int startRow, int tileSize, int maxCol, int maxRow,
@@ -14,7 +15,7 @@ public class Fish extends Mob {
     @Override
     // Override the canEnterTile method to allow movement only on blue tiles
     protected boolean canEnterTile(Color tileColor) {
-        return tileColor.equals(new Color(66, 135, 245));
+        return tileColor.equals(TerrainType.WATER.color());
     }
 
     @Override

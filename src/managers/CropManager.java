@@ -8,7 +8,9 @@ import java.io.IOException;
 import javax.imageio.ImageIO;
 import java.util.ArrayList;
 import java.util.List;
-import src.entities.crops.Crop;
+
+import src.Enums.Colors;
+import src.entities.Crop;
 
 public class CropManager {
     public static final int CROP_COUNT = 2;
@@ -17,9 +19,6 @@ public class CropManager {
     private static final int FASTEST_GROWTH_TICKS_PER_STAGE = 120;
     private static final int SLOWEST_GROWTH_TICKS_PER_STAGE = 240;
     private static final String[] CROP_NAMES = {"carrot", "tree"};
-    // text color in crop selection menu
-    private static final Color CARROT_COLOR = new Color(235, 125, 45);
-    private static final Color TREE_COLOR = new Color(34, 139, 34);
 
     private final Crop[][] tileCrops;
     private final int[] harvestedCropCounts = new int[CROP_COUNT];
@@ -58,10 +57,6 @@ public class CropManager {
 
     public String getCropName(int cropIndex) {
         return createCrop(cropIndex).getName();
-    }
-
-    public Color getCropColor(int cropIndex) {
-        return createCrop(cropIndex).getColor();
     }
 
     // check if a crop can be planted on a tile based on the crop type and tile type
@@ -247,13 +242,9 @@ public class CropManager {
     private Crop createCrop(int cropIndex) {
         switch (cropIndex) {
             case 0:
-                return new Crop(cropIndex, CROP_NAMES[cropIndex], CARROT_COLOR,
-                    carrotStageImages[MATURE_STAGE], carrotStageImages,
-                    new int[][] {{35, 70}, {60, 80}, {45, 85}});
+                return new Crop(cropIndex, CROP_NAMES[cropIndex], carrotStageImages[MATURE_STAGE], carrotStageImages, new int[][] {{35, 70}, {60, 80}, {45, 85}});
             case 1:
-                return new Crop(cropIndex, CROP_NAMES[cropIndex], TREE_COLOR, treeImage,
-                    treeStageImages,
-                    new int[][] {{30, 75}, {30, 70}, {35, 80}});
+                return new Crop(cropIndex, CROP_NAMES[cropIndex], treeImage, treeStageImages, new int[][] {{30, 75}, {30, 70}, {35, 80}});
             default:
                 throw new IllegalArgumentException("Unknown crop index: " + cropIndex);
         }

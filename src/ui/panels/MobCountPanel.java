@@ -6,7 +6,6 @@ import java.util.List;
 import javax.swing.BorderFactory;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-
 import src.entities.Mob;
 import src.entities.mobs.Chicken;
 import src.entities.mobs.Dweller;
